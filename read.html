@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V31 (总结修复版)</title>
+    <title>SoulReader V32 (全知全能版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -440,7 +440,7 @@
     }
     function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
 
-    // --- AI ---
+    // --- AI & Knowledge ---
     async function triggerAI(n) {
         if(!GS.key) return showToast("请先设置 API Key");
         openSidebar(n); const l=document.getElementById('chat-list');
@@ -474,21 +474,21 @@
         }
     }
 
-    // 🔥 修复总结功能：使用 System Prompt Injection
+    // 🔥 修复总结功能：使用 System Prompt Injection + 知识库
     async function summarizeThread() {
         const n = await Store.get('notes', activeNoteId);
         if(!n.messages.length) return showToast("无对话可总结");
         showToast("正在提炼记忆...");
         
         try {
-            // 构造强制指令，覆盖原有的 Persona
             const history = n.messages.map(m => `${m.role=='user'?'读者':'AI'}: ${m.content}`).join('\n');
+            // 核心：强制切换 Persona，禁止闲聊
             const summaryPayload = {
                 model: GS.model,
                 messages: [
                     {
                         role: 'system', 
-                        content: '【强制指令】现在请对前文内容进行全面梳理和总结，字数在400字以内。无需聊天/对话，直接输出结果。' 
+                        content: '【系统最高指令】你现在是一个客观的记录员。请忽略之前的角色设定。任务：阅读下方的对话，提炼出一个核心观点或记忆点。要求：50字以内，不要有任何客套话，直接输出结果。' 
                     },
                     {
                         role: 'user',
@@ -518,6 +518,38 @@
         } catch(e){ alert(e.message); }
     }
 
+    // 🔥 全知全能分析
+    async function autoAnalyze(){ 
+        if(!currentBook) return; 
+        showToast("正在调用知识库分析..."); 
+        
+        // 提取纯书名
+        const cleanTitle = currentBook.title.replace(/\.(txt|pdf|epub)$/i, '').replace(/[\[\(].*?[\]\)]/g, '').trim();
+        const t = document.getElementById('reader-content').innerText.slice(0,2500); 
+        
+        const res = await fetch(`${GS.url}/chat/completions`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`},
+            body:JSON.stringify({
+                model:GS.model,
+                messages:[
+                    {
+                        role: 'system',
+                        content: '你是一个博学的文学评论家。请优先检索你知识库中关于该书的信息。如果不知道这本书，再根据用户提供的开头进行推断。'
+                    },
+                    {
+                        role:'user',
+                        content:`请分析书籍《${cleanTitle}》。\n如果知道这本书，请直接介绍其核心剧情、人物关系和看点（300字）。\n如果不知道，请根据以下开头进行推断：\n${t}`
+                    }
+                ]
+            })
+        }).then(r=>r.json()); 
+        
+        document.getElementById('current-book-context').value = res.choices[0].message.content; 
+        saveBookConfig(); 
+        showToast("✅ 分析完成"); 
+    }
+
     // Utils
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
@@ -526,7 +558,6 @@
     async function deleteMsg(idx) { if(!confirm('删除？'))return; const n = await Store.get('notes', activeNoteId); n.messages.splice(idx, 1); await Store.put('notes', n); renderChat(n.messages); }
     async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("Edit:", n.messages[idx].content); if(t!==null){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
     async function retryAI() { const n = await Store.get('notes', activeNoteId); if(n.messages.at(-1).role==='ai'){ n.messages.pop(); await Store.put('notes', n); renderChat(n.messages); triggerAI(n); } }
-    async function autoAnalyze(){ if(!currentBook) return; showToast("阅读中..."); const t = document.getElementById('reader-content').innerText.slice(0,3000); const res = await fetch(`${GS.url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`},body:JSON.stringify({model:GS.model,messages:[{role:'user',content:`分析书籍背景(300字):\n${t}`}]})}).then(r=>r.json()); document.getElementById('current-book-context').value = res.choices[0].message.content; saveBookConfig(); showToast("✅ 完成"); }
     function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
     function saveBookConfig(){currentBook.context=document.getElementById('current-book-context').value;Store.put('books',currentBook);}
     function renderMemories(){ const list = document.getElementById('memory-list'); list.innerHTML = ''; (currentBook.memories || []).forEach((m, i) => { const div = document.createElement('div'); div.innerHTML = `<div style="background:#fff8e1;border-left:4px solid #f1c40f;padding:10px;margin-bottom:10px;position:relative"><div contenteditable="true" onblur="updateMemory(${i}, this.innerText)">${m.replace(/</g,'&lt;')}</div><div style="position:absolute;top:0;right:0;padding:5px;color:red;font-weight:bold;cursor:pointer" onclick="deleteMemory(${i})">×</div></div>`; list.appendChild(div.firstChild); }); }
@@ -555,5 +586,3 @@
 </script>
 </body>
 </html>
-
-
