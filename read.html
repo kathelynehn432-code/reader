@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V29 (数据寻回版)</title>
+    <title>SoulReader V30 (分类收纳版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -80,10 +80,19 @@
         #shelf-list { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 100px; }
         .book-cover { aspect-ratio: 2/3; background: #8e44ad; border-radius: 8px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
 
-        /* Timeline & Long Press */
-        .tl-note-item { padding: 15px; border-bottom: 1px dashed #eee; transition: background 0.2s; position: relative; }
+        /* Timeline Groups (新分类样式) */
+        .tl-book-group { background: white; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
+        .tl-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; cursor: pointer; transition: background 0.2s; }
+        .tl-header:active { background: #f9f9f9; }
+        .tl-title { font-weight: bold; font-size: 15px; color: #333; display: flex; align-items: center; gap: 8px; }
+        .tl-arrow { transition: transform 0.3s ease; color: #999; font-size: 12px; }
+        .tl-book-group.collapsed .tl-notes-container { display: none; }
+        .tl-book-group.collapsed .tl-arrow { transform: rotate(-90deg); }
+        
+        /* Timeline Items */
+        .tl-note-item { padding: 15px; border-top: 1px solid #f0f0f0; transition: background 0.2s; position: relative; background: #fafafa; }
         .tl-note-item:active { background: #f0f0f0; transform: scale(0.99); }
-        .tl-note-item.long-pressed { background: #ffebeb; border-color: #ffcccc; }
+        .tl-note-item.long-pressed { background: #ffebeb; }
 
         /* Action Sheet */
         #action-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 6000; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.2); transform: translateY(100%); transition: transform 0.2s; padding-bottom: max(20px, var(--safe-bottom)); }
@@ -138,9 +147,12 @@
     </div>
     
     <div id="view-timeline" class="view-page">
-        <div style="padding:15px;background:#fff;border-bottom:1px solid #eee;font-weight:bold;color:#d35400;position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center">
-            <span>📂 批注归档</span>
-            <span style="font-size:11px;color:#999;font-weight:normal">长按笔记可删除</span>
+        <!-- 顶部筛选栏 -->
+        <div style="padding:15px;background:#fff;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.02)">
+            <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:#d35400;font-size:16px;padding-right:20px;width:auto">
+                <option value="all">📂 全部笔记</option>
+            </select>
+            <span style="font-size:11px;color:#999">长按管理</span>
         </div>
         <div id="timeline-content" style="padding:15px"></div>
     </div>
@@ -189,8 +201,6 @@
         <button class="btn" style="background:#f1c40f;color:#333;padding:5px 12px;font-size:12px;font-weight:bold" onclick="openBookConfig()">🧠 记忆/设定</button>
     </div>
     <div id="reader-content" onscroll="handleScroll()"></div>
-    
-    <!-- 悬浮坞 -->
     <div id="floating-dock">
         <div class="dock-btn" id="btn-ai">⚡ AI 吐槽</div>
         <div style="height:1px;background:rgba(255,255,255,0.2);margin:0 10px"></div>
@@ -246,12 +256,11 @@
 
 <script>
     // --- Core Logic ---
-    // 默认尝试使用用户上传时的版本号 V20，或者是最近保存的
     let DB_NAME = localStorage.getItem('sr_dbname') || 'SoulReaderV20';
     let db, currentBook=null, activeNoteId=null;
     const GS={url:localStorage.getItem('sr_url')||'https://api.openai.com/v1', key:localStorage.getItem('sr_key')||'', model:localStorage.getItem('sr_model')||'gpt-3.5-turbo', persona:localStorage.getItem('sr_persona')||'你是一个毒舌书评人，喜欢用犀利幽默的语言点评书籍片段。', encoding: localStorage.getItem('sr_encoding')||'utf-8'};
     
-    // Init UI
+    // Init Settings
     document.getElementById('api-url').value=GS.url; document.getElementById('api-key').value=GS.key; document.getElementById('default-persona').value=GS.persona; document.getElementById('model-select').innerHTML=`<option>${GS.model}</option>`;
     document.getElementById('encoding-select').value = GS.encoding;
     document.getElementById('db-name-input').value = DB_NAME;
@@ -259,42 +268,39 @@
 
     window.openSidebarById = async function(id) { const n=await Store.get('notes',id); if(n) openSidebar(n); };
 
-    // --- DB Switching Logic ---
     function switchDB() {
         const newName = document.getElementById('db-name-input').value.trim();
-        if(!newName) return showToast("请输入仓库名");
-        if(newName === DB_NAME) return showToast("已经是这个仓库了");
-        
-        if(confirm(`确定切换到仓库 "${newName}" 吗？\n页面将会刷新。`)) {
-            localStorage.setItem('sr_dbname', newName);
-            location.reload();
-        }
+        if(!newName || newName === DB_NAME) return;
+        if(confirm(`切换到 "${newName}" 吗？`)) { localStorage.setItem('sr_dbname', newName); location.reload(); }
     }
 
     function initDB(){return new Promise(r=>{
-        const q=indexedDB.open(DB_NAME,2); // Use higher version to ensure upgrade
-        q.onupgradeneeded=e=>{
-            db=e.target.result;
-            if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'});
-            if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}
-        };
+        const q=indexedDB.open(DB_NAME,2); 
+        q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}};
         q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();};
-        q.onerror=e=>{alert("无法打开数据库，请重试或更换仓库名");}
     })}
     const Store={put:(t,d)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).put(d);x.oncomplete=r}),getAll:t=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).getAll().onsuccess=e=>r(e.target.result)}),get:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).get(id).onsuccess=e=>r(e.target.result)}),del:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).delete(id);x.oncomplete=r})};
 
     async function refreshShelf(){
         const bs=await Store.getAll('books');
-        const l=document.getElementById('shelf-list');l.innerHTML='';
-        const empty=document.getElementById('empty-tip');
+        const l=document.getElementById('shelf-list'); l.innerHTML='';
+        document.getElementById('empty-tip').style.display = bs.length ? 'none' : 'block';
         
-        if(bs.length==0) {
-            l.innerHTML='';
-            empty.style.display='block';
-        } else {
-            empty.style.display='none';
-            bs.forEach(b=>{const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;d.innerHTML=`<div style="font-weight:bold;overflow:hidden;max-height:60px;line-height:1.2">${b.title}</div><div style="font-size:10px;margin-top:5px;opacity:0.8">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-8px;right:-8px;background:rgba(231,76,60,0.9);color:white;width:24px;height:24px;border-radius:50%;line-height:22px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.2)">×</div>`;d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)};l.appendChild(d)})
-        }
+        // Update Filter Options
+        const filter = document.getElementById('timeline-filter');
+        const currentVal = filter.value;
+        filter.innerHTML = '<option value="all">📂 全部笔记</option>';
+        bs.forEach(b => {
+            const op = document.createElement('option');
+            op.value = b.id; op.innerText = `📖 ${b.title}`;
+            filter.appendChild(op);
+            
+            const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;
+            d.innerHTML=`<div style="font-weight:bold;overflow:hidden;max-height:60px;line-height:1.2">${b.title}</div><div style="font-size:10px;margin-top:5px;opacity:0.8">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-8px;right:-8px;background:rgba(231,76,60,0.9);color:white;width:24px;height:24px;border-radius:50%;line-height:22px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.2)">×</div>`;
+            d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)};
+            l.appendChild(d);
+        });
+        if(currentVal && Array.from(filter.options).some(o=>o.value==currentVal)) filter.value = currentVal;
     }
     
     async function openReader(b){
@@ -303,39 +309,27 @@
         document.getElementById('book-title-header').innerText=b.title;
         document.getElementById('reader-content').innerHTML=b.content;
         setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
-        const ns=await Store.getAll('notes'); 
-        restoreHighlights(ns.filter(n=>n.bookId===b.id));
+        const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
     }
-    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();}
+    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
-    // --- 显影逻辑 ---
+    // --- Restore Highlights ---
     function restoreHighlights(notes) {
         if(!notes || !notes.length) return;
-        const root = document.getElementById('reader-content');
-        const content = root.innerHTML;
+        const root = document.getElementById('reader-content'); const content = root.innerHTML;
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-        const textNodes = [];
-        let node;
-        while(node = walker.nextNode()) textNodes.push(node);
-
+        const textNodes = []; let node; while(node = walker.nextNode()) textNodes.push(node);
         notes.forEach(note => {
             if(content.includes(`window.openSidebarById('${note.id}')`)) return;
             for(let tn of textNodes) {
                 const idx = tn.nodeValue.indexOf(note.quote);
                 if(idx !== -1) {
                     try {
-                        const range = document.createRange();
-                        range.setStart(tn, idx);
-                        range.setEnd(tn, idx + note.quote.length);
-                        const wrapper = document.createElement('mark');
-                        wrapper.className = 'ai-mark';
-                        wrapper.dataset.nid = note.id;
-                        wrapper.textContent = note.quote;
+                        const range = document.createRange(); range.setStart(tn, idx); range.setEnd(tn, idx + note.quote.length);
+                        const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = note.quote;
                         wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); };
-                        range.deleteContents();
-                        range.insertNode(wrapper);
-                        break;
-                    } catch(e) { console.error("Restore failed", e); }
+                        range.deleteContents(); range.insertNode(wrapper); break;
+                    } catch(e) {}
                 }
             }
         });
@@ -344,61 +338,41 @@
     // --- Selection ---
     document.addEventListener('selectionchange', () => {
         const s = window.getSelection(); const d = document.getElementById('floating-dock');
-        if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) {
-             d.classList.add('visible');
-        } else {
-             setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300);
-        }
+        if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible');
+        else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300);
     });
 
     const handleCreate = (e, mode) => {
         e.preventDefault(); e.stopPropagation();
-        const selection = window.getSelection();
-        if (selection.isCollapsed) return showToast("⚠️ 请先选择文本");
-        const range = selection.getRangeAt(0).cloneRange();
-        const text = selection.toString();
+        const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请选择文本");
+        const range = s.getRangeAt(0).cloneRange(); const text = s.toString();
         if(!text.trim()) return showToast("⚠️ 选区为空");
         createNoteWithSelection(range, text, mode);
     };
-
-    ['mousedown','touchstart'].forEach(evt => {
-        document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai'));
-        document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user'));
-    });
+    ['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
 
     async function createNoteWithSelection(range, text, mode) {
         const allNotes = await Store.getAll('notes');
-        const existing = allNotes.find(n => n.bookId === currentBook.id && n.quote === text);
-        if(existing) {
-            if(!confirm("⚠️ 这段话好像已经标记过了，确定要重复标记吗？")) {
-                window.getSelection().removeAllRanges();
-                document.getElementById('floating-dock').classList.remove('visible');
-                return;
-            }
+        if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 已有相同标记，重复标记？")) {
+             window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return;
         }
-
-        document.getElementById('floating-dock').classList.remove('visible'); 
-        const nid = 'n'+Date.now();
-        
+        document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
         try {
             const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = nid; wrapper.innerText = text;
             wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); };
             range.deleteContents(); range.insertNode(wrapper);
         } catch(e) {
             const anchor = document.createElement('span'); anchor.className = 'ai-anchor'; anchor.innerText = '📝'; anchor.dataset.nid = nid;
-            anchor.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); };
-            range.collapse(true); range.insertNode(anchor);
+            anchor.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.collapse(true); range.insertNode(anchor);
         }
         window.getSelection().removeAllRanges();
-
         const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." };
         await Store.put('notes', note);
         if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
 
-    // --- Chat ---
+    // --- Chat & Timeline ---
     function openSidebar(n){activeNoteId=n.id;document.getElementById('sidebar').classList.add('active');document.getElementById('chat-quote').innerText=n.quote;renderChat(n.messages)}
-
     function renderChat(ms){
         const l=document.getElementById('chat-list'); l.innerHTML='';
         if(ms.length==0) l.innerHTML='<div style="text-align:center;color:#999;margin-top:20px;font-size:13px">✨ 暂无笔记</div>';
@@ -418,66 +392,65 @@
         l.scrollTop=l.scrollHeight;
     }
 
-    // --- Timeline Long Press & Delete Logic ---
-    let longPressTimer;
-    let isLongPress = false;
-    let targetNoteId = null;
-
-    function initTimelineItem(el, noteId) {
-        el.addEventListener('touchstart', (e) => {
-            isLongPress = false;
-            longPressTimer = setTimeout(() => {
-                isLongPress = true; el.classList.add('long-pressed'); if(navigator.vibrate) navigator.vibrate(50); showActionSheet(noteId);
-            }, 600);
-        });
-        el.addEventListener('touchend', () => { clearTimeout(longPressTimer); setTimeout(()=>el.classList.remove('long-pressed'), 300); });
-        el.addEventListener('touchmove', () => { clearTimeout(longPressTimer); });
-        el.addEventListener('mousedown', () => {
-             isLongPress = false; longPressTimer = setTimeout(() => { isLongPress = true; el.classList.add('long-pressed'); showActionSheet(noteId); }, 600);
-        });
-        el.addEventListener('mouseup', () => { clearTimeout(longPressTimer); setTimeout(()=>el.classList.remove('long-pressed'), 300); });
-    }
-
-    function showActionSheet(nid) {
-        targetNoteId = nid;
-        document.getElementById('as-mask').classList.add('active');
-        document.getElementById('action-sheet').classList.add('active');
-        document.getElementById('as-del-btn').onclick = async () => {
-            if(!targetNoteId) return;
-            await Store.del('notes', targetNoteId);
-            const mark = document.querySelector(`mark[data-nid="${targetNoteId}"]`) || document.querySelector(`span[data-nid="${targetNoteId}"]`);
-            if(mark) { const text = document.createTextNode(mark.textContent); mark.parentNode.replaceChild(text, mark); }
-            closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除");
-        };
-    }
-    function closeActionSheet() { document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); targetNoteId = null; }
-
+    // --- Timeline Logic (Fixed Category & Filter) ---
     async function refreshTimeline(){
-        const ns=await Store.getAll('notes');const bs=await Store.getAll('books');
-        const c=document.getElementById('timeline-content');c.innerHTML='';
+        const ns=await Store.getAll('notes'); const bs=await Store.getAll('books');
+        const c=document.getElementById('timeline-content'); c.innerHTML='';
+        const filterId = document.getElementById('timeline-filter').value;
+
         if(ns.length==0){c.innerHTML='<div style="text-align:center;color:#999;margin-top:20px">暂无笔记</div>';return}
-        const gs={};ns.forEach(n=>{if(!gs[n.bookId])gs[n.bookId]=[];gs[n.bookId].push(n)});
+        
+        // Group by Book
+        const gs={};
+        ns.forEach(n=>{
+            if(filterId !== 'all' && n.bookId !== filterId) return; // Filter
+            if(!gs[n.bookId]) gs[n.bookId]=[]; gs[n.bookId].push(n);
+        });
+        
+        if(Object.keys(gs).length === 0) { c.innerHTML='<div style="text-align:center;color:#999;margin-top:20px">该书下暂无笔记</div>'; return; }
+
         Object.keys(gs).forEach(bid=>{
             const b=bs.find(x=>x.id==bid);
-            const g=document.createElement('div'); g.style.marginBottom='20px';
-            g.innerHTML=`<div style="font-weight:bold;padding:10px;background:#eee;border-radius:8px 8px 0 0">📖 ${b?b.title:'未知'}</div>`;
-            gs[bid].forEach(n=>{
+            const g=document.createElement('div'); g.className='tl-book-group';
+            // Collapsible Header
+            g.innerHTML=`
+                <div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <span class="tl-title">📖 ${b?b.title:'未知'} <small style="color:#999;font-weight:normal">(${gs[bid].length})</small></span>
+                    <span class="tl-arrow">▼</span>
+                </div>
+                <div class="tl-notes-container"></div>
+            `;
+            const ct=g.querySelector('.tl-notes-container');
+            
+            // Render Notes
+            gs[bid].sort((a,b)=>b.time-a.time).forEach(n=>{
                 const d=document.createElement('div'); d.className='tl-note-item';
-                d.innerHTML=`<div style="color:#666">"${n.quote}"</div>`;
+                d.innerHTML=`<div style="color:#666">"${n.quote}"</div><div style="font-size:12px;color:#999;margin-top:4px">${(n.messages[n.messages.length-1]?.content||'').slice(0,40)}...</div>`;
                 initTimelineItem(d, n.id);
                 d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),500); } };
-                g.appendChild(d);
+                ct.appendChild(d);
             });
             c.appendChild(g);
         });
     }
 
-    // --- AI Stream ---
+    // --- Actions ---
+    let longPressTimer, isLongPress, targetNoteId;
+    function initTimelineItem(el, nid) {
+        const start = () => { isLongPress=false; longPressTimer=setTimeout(()=>{isLongPress=true;el.classList.add('long-pressed');if(navigator.vibrate)navigator.vibrate(50);showActionSheet(nid)},600); };
+        const end = () => { clearTimeout(longPressTimer); setTimeout(()=>el.classList.remove('long-pressed'),300); };
+        el.addEventListener('touchstart', start); el.addEventListener('touchend', end); el.addEventListener('mousedown', start); el.addEventListener('mouseup', end);
+    }
+    function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); 
+        document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; 
+    }
+    function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
+
+    // --- AI ---
     async function triggerAI(n) {
         if(!GS.key) return showToast("请先设置 API Key");
-        openSidebar(n);
-        const l=document.getElementById('chat-list');
-        const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px" class="skeleton"></div><div style="height:14px;width:150px;margin-top:5px" class="skeleton"></div></div>`;
+        openSidebar(n); const l=document.getElementById('chat-list');
+        const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px" class="skeleton"></div></div>`;
         l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
 
         const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n');
@@ -487,19 +460,11 @@
 
         let fullText = "";
         try {
-            await callAPIStream(msgs, (chunk) => {
-                fullText += chunk;
-                loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`;
-                l.scrollTop = l.scrollHeight;
-            });
+            await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; });
             loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`;
-            n.messages.push({role:'ai', content:fullText, time:Date.now()});
-            await Store.put('notes', n);
-        } catch(e) {
-            loadDiv.innerHTML = `<div class="msg-bubble" style="background:#fee;color:#c0392b">❌ 出错: ${e.message}</div>`;
-        }
+            n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n);
+        } catch(e) { loadDiv.innerHTML = `<div class="msg-bubble" style="color:red">Error: ${e.message}</div>`; }
     }
-
     async function callAPIStream(messages, onChunk) {
         const response = await fetch(`${GS.url}/chat/completions`, {method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages: messages, stream: true })});
         if(!response.ok) throw new Error('API Error');
@@ -515,30 +480,25 @@
         }
     }
 
-    // Utils & Standard
+    // Utils
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
-    function safeCopy(text) { 
-        const ta = document.createElement("textarea"); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); 
-        try { document.execCommand('copy'); showToast("✅ 已复制"); } catch (e) { showToast("❌ 复制失败"); } document.body.removeChild(ta); 
-    }
-    
-    // Actions
+    function safeCopy(text) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast("✅ 已复制"); } catch (e) {} document.body.removeChild(ta); }
     async function sendMsg(tai) { const i=document.getElementById('chat-input'); const t=i.value.trim(); const n=await Store.get('notes', activeNoteId); if(t){ n.messages.push({role:'user',content:t,time:Date.now()}); await Store.put('notes',n); renderChat(n.messages); i.value=''; } if(tai) triggerAI(n); }
     async function deleteMsg(idx) { if(!confirm('删除？'))return; const n = await Store.get('notes', activeNoteId); n.messages.splice(idx, 1); await Store.put('notes', n); renderChat(n.messages); }
     async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("Edit:", n.messages[idx].content); if(t!==null){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
     async function retryAI() { const n = await Store.get('notes', activeNoteId); if(n.messages.at(-1).role==='ai'){ n.messages.pop(); await Store.put('notes', n); renderChat(n.messages); triggerAI(n); } }
-    async function summarizeThread() { const n = await Store.get('notes', activeNoteId); if(!n.messages.length) return showToast("无对话"); showToast("正在总结..."); const res = await fetch(`${GS.url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`},body:JSON.stringify({model:GS.model,messages:[{role:'user',content:`总结讨论(50字):\n${n.messages.map(m=>m.content).join('\n')}`}]})}).then(r=>r.json()); const summary = res.choices[0].message.content; if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push(summary); await Store.put('books', currentBook); n.messages.push({role:'ai',content:`*(已记忆)* ${summary}`,time:Date.now()}); renderChat(n.messages); await Store.put('notes',n); showToast("🧠 已记忆"); }
+    async function summarizeThread() { const n = await Store.get('notes', activeNoteId); if(!n.messages.length) return showToast("无对话"); showToast("总结中..."); const res = await fetch(`${GS.url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`},body:JSON.stringify({model:GS.model,messages:[{role:'user',content:`总结(50字):\n${n.messages.map(m=>m.content).join('\n')}`}]})}).then(r=>r.json()); const summary = res.choices[0].message.content; if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push(summary); await Store.put('books', currentBook); n.messages.push({role:'ai',content:`*(已记忆)* ${summary}`,time:Date.now()}); renderChat(n.messages); await Store.put('notes',n); }
     async function autoAnalyze(){ if(!currentBook) return; showToast("阅读中..."); const t = document.getElementById('reader-content').innerText.slice(0,3000); const res = await fetch(`${GS.url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`},body:JSON.stringify({model:GS.model,messages:[{role:'user',content:`分析书籍背景(300字):\n${t}`}]})}).then(r=>r.json()); document.getElementById('current-book-context').value = res.choices[0].message.content; saveBookConfig(); showToast("✅ 完成"); }
     function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
     function saveBookConfig(){currentBook.context=document.getElementById('current-book-context').value;Store.put('books',currentBook);}
     function renderMemories(){ const list = document.getElementById('memory-list'); list.innerHTML = ''; (currentBook.memories || []).forEach((m, i) => { const div = document.createElement('div'); div.innerHTML = `<div style="background:#fff8e1;border-left:4px solid #f1c40f;padding:10px;margin-bottom:10px;position:relative"><div contenteditable="true" onblur="updateMemory(${i}, this.innerText)">${m.replace(/</g,'&lt;')}</div><div style="position:absolute;top:0;right:0;padding:5px;color:red;font-weight:bold;cursor:pointer" onclick="deleteMemory(${i})">×</div></div>`; list.appendChild(div.firstChild); }); }
     async function updateMemory(idx, text){ currentBook.memories[idx] = text; await Store.put('books', currentBook); }
-    async function deleteMemory(idx){ if(confirm("删除此记忆？")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
+    async function deleteMemory(idx){ if(confirm("删除?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
     async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("新记忆..."); await Store.put('books', currentBook); renderMemories(); }
     async function fetchModels(){showToast("加载模型...");try{const r=await fetch(`${GS.url}/models`,{headers:{'Authorization':`Bearer ${GS.key}`}});const d=await r.json();const s=document.getElementById('model-select');s.innerHTML='';(d.data||d).forEach(m=>s.add(new Option(m.id,m.id)));showToast("✅ 成功")}catch(e){alert(e.message)}}
     
-    // File Reading with GBK Support
+    // File
     document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在解析...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=formatTxt(await parseEpub(f));await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
@@ -547,7 +507,7 @@
     function formatTxt(t){return t.split('\n').filter(s=>s.trim()).map(s=>`<p>${s}</p>`).join('')}
     function formatPdf(t){return t.split('\n').map(s=>s.trim()?`<p>${s}</p>`:'<br>').join('')}
     
-    // Settings
+    // System
     function saveGS(){GS.key=document.getElementById('api-key').value;GS.url=document.getElementById('api-url').value;GS.model=document.getElementById('model-select').value;GS.persona=document.getElementById('default-persona').value;GS.encoding=document.getElementById('encoding-select').value;localStorage.setItem('sr_key',GS.key);localStorage.setItem('sr_url',GS.url);localStorage.setItem('sr_model',GS.model);localStorage.setItem('sr_persona',GS.persona);localStorage.setItem('sr_encoding',GS.encoding);}
     function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(refreshShelf)}
     function switchTab(t){document.querySelectorAll('.tab-item').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.view-page').forEach(e=>e.classList.remove('active'));const i={'shelf':0,'timeline':1,'settings':2}[t];document.querySelectorAll('.tab-item')[i].classList.add('active');document.getElementById(`view-${t}`).classList.add('active');if(t=='timeline')refreshTimeline()}
