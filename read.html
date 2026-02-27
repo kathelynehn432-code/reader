@@ -319,9 +319,45 @@
         currentBook=b; if(!currentBook.memories) currentBook.memories=[];
         document.getElementById('reader-overlay').classList.add('active');
         document.getElementById('book-title-header').innerText=b.title;
-        document.getElementById('reader-content').innerHTML=b.content;
+        
+        // --- 🤖 核心：智能提取目录 ---
+        let tempContent = b.content;
+        let tocHTML = '';
+        let chapIdx = 0;
+        
+        // 使用正则匹配：第一章、第12回、Chapter 1、番外等，并限制字数防止误判正文
+        const chapRegex = /<p>\s*(第[\u4e00-\u9fa50-9零一二三四五六七八九十百千万]+[章回节卷部].{0,30}|Chapter\s*\d+.*?|引子|番外.*?|前言|序言|尾声|后记)<\/p>/g;
+        
+        tempContent = tempContent.replace(chapRegex, (match, title) => {
+            chapIdx++;
+            const curId = `toc-chap-${chapIdx}`;
+            // 左侧生成目录列表项
+            tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`;
+            // 给正文里的这一行加上 id 和 醒目的排版
+            return `<p id="${curId}" style="font-weight:bold;color:var(--accent);font-size:1.3em;margin-top:1.5em;padding-bottom:10px;border-bottom:1px dashed #ddd;">${title}</p>`;
+        });
+
+        if(chapIdx === 0) {
+            tocHTML = '<div style="padding:30px;text-align:center;color:#999;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇散文、未分章的TXT，或是排版比较特殊的文档。</div>';
+        }
+        document.getElementById('toc-list').innerHTML = tocHTML;
+        // --- 目录提取结束 ---
+
+        document.getElementById('reader-content').innerHTML = tempContent;
         setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
+    }
+
+    // 目录跳转功能
+    window.jumpToChap = function(id) {
+        const el = document.getElementById(id);
+        if(el) {
+            const reader = document.getElementById('reader-content');
+            // 计算跳转位置，减去头部栏的高度和一点留白
+            reader.scrollTo({ top: el.offsetTop - 60, behavior: 'smooth' });
+            // 跳转后自动关闭目录侧边栏
+            document.getElementById('toc-sidebar').classList.remove('active');
+        }
     }
     function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
@@ -604,5 +640,6 @@
 </script>
 </body>
 </html>
+
 
 
