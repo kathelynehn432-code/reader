@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V33 (清透修复版)</title>
+    <title>SoulReader V34 (完美双保险版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -19,39 +19,23 @@
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* 🚀 修复滑动 Bug 的核心代码：锁定视口绝对尺寸 */
         body { 
-            font-family: 'PingFang SC', serif; 
-            margin: 0; 
-            position: fixed; /* 锁定屏幕，防止浏览器网址栏伸缩导致错位 */
-            inset: 0; 
-            overflow: hidden; 
-            background: var(--bg); 
-            color: var(--text); 
-            display: flex; 
-            flex-direction: column; 
-            padding-top: max(10px, env(safe-area-inset-top)); /* 顶部留白，绝不贴边 */
+            font-family: 'PingFang SC', serif; margin: 0; 
+            position: fixed; inset: 0; overflow: hidden; 
+            background: var(--bg); color: var(--text); 
+            display: flex; flex-direction: column; 
+            padding-top: max(10px, env(safe-area-inset-top)); 
         }
         
-        /* 📱 悬浮毛玻璃胶囊导航 */
         #tab-bar { 
-            position: fixed; 
-            bottom: max(20px, calc(15px + var(--safe-bottom))); 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 90%; 
-            max-width: 400px; 
-            height: 65px; 
+            position: fixed; bottom: max(20px, calc(15px + var(--safe-bottom))); 
+            left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 400px; height: 65px; 
             background: rgba(255, 255, 255, 0.65); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255,255,255,0.8); 
-            border-radius: 35px; 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.8); border-radius: 35px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            z-index: 900; 
+            display: flex; justify-content: space-around; align-items: center; z-index: 900; 
         }
         .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #888; flex: 1; height: 100%; justify-content: center; transition: all 0.2s; }
         .tab-item:active { transform: scale(0.9); }
@@ -69,18 +53,15 @@
         .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn.danger { background: #ff7675; color: white; }
 
-        /* 📚 修复书架尺寸：完完全全退回 V32 的精致小巧比例 */
         #shelf-list { padding: 15px 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 150px; }
         .book-cover { aspect-ratio: 2/3; border-radius: 8px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
         .book-cover:active { transform: scale(0.95); }
 
-        /* 阅读器软化 */
         #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; }
         #reader-overlay.active { display: flex; }
         #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
         #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; }
 
-        /* 侧边栏软化 */
         #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
         #toc-sidebar.active { transform: translateX(0); }
         .toc-item { padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 15px; color: #444; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s; }
@@ -165,7 +146,6 @@
         </svg>
         <div style="margin-top:2px">归档</div>
     </div>
-    <!-- 👤 人设：换成了高级极简小人图标 -->
     <div class="tab-item" onclick="switchTab('persona')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -237,12 +217,18 @@
                     <input type="password" id="api-key" onchange="updateCurrentPreset()" placeholder="sk-...">
                     <label style="font-size:13px;color:#666;display:block;margin-top:10px">API URL</label>
                     <input type="text" id="api-url" onchange="updateCurrentPreset()" placeholder="https://api.openai.com/v1">
-                    <label style="font-size:13px;color:#666;display:block;margin-top:10px">模型名称 (可手动输入或刷新)</label>
-                    <div style="display:flex;gap:10px;align-items:center">
-                        <datalist id="model-list"></datalist>
-                        <input type="text" id="api-model" list="model-list" onchange="updateCurrentPreset()" style="margin:0;flex:1" placeholder="例如: gpt-3.5-turbo">
-                        <button class="btn" onclick="fetchModelsForPreset()" style="background:#a4b0be;margin-top:5px">🔄 刷新</button>
+                    
+                    <!-- 🚀 完美修复的模型选择区域 -->
+                    <label style="font-size:13px;color:#666;display:block;margin-top:10px">模型名称 (可手动输入 或 刷新选择)</label>
+                    <input type="text" id="api-model" onchange="updateCurrentPreset()" placeholder="例如: gpt-3.5-turbo">
+                    
+                    <div style="display:flex;gap:10px;margin-top:8px;align-items:center;">
+                        <select id="model-list-select" onchange="if(this.value){document.getElementById('api-model').value=this.value; updateCurrentPreset();}" style="margin:0;flex:1;background:rgba(255,255,255,0.8);font-size:14px;">
+                            <option value="">👇 点击右侧刷新获取列表</option>
+                        </select>
+                        <button class="btn" onclick="fetchModelsForPreset()" style="background:#a4b0be;margin:0;padding:12px 15px;">🔄 刷新</button>
                     </div>
+                    <!-- 修复结束 -->
                 </div>
             </div>
 
@@ -346,21 +332,18 @@
     let DB_NAME = localStorage.getItem('sr_dbname') || 'SoulReaderV20';
     let db, currentBook = null, activeNoteId = null;
 
-    // 📡 API Presets Logic
     let apiPresets = JSON.parse(localStorage.getItem('sr_api_presets')) ||[
         { name: "默认配置", url: "https://api.openai.com/v1", key: "", model: "gpt-3.5-turbo" }
     ];
     let activePresetIdx = parseInt(localStorage.getItem('sr_active_preset_idx')) || 0;
     if(!apiPresets[activePresetIdx]) activePresetIdx = 0;
 
-    // 🎭 Personas Logic
     let personas = JSON.parse(localStorage.getItem('sr_personas')) ||[
         { name: "默认人设", content: "你是一个客观、理性的读书助手。" }
     ];
     let activePersonaIdx = parseInt(localStorage.getItem('sr_active_persona_idx')) || 0;
     if(!personas[activePersonaIdx]) activePersonaIdx = 0;
 
-    // 全局 GS 对象
     const GS = {
         get url() { return apiPresets[activePresetIdx].url || 'https://api.openai.com/v1'; },
         get key() { return apiPresets[activePresetIdx].key || ''; },
@@ -380,7 +363,21 @@
     function savePresetAsNew() { const name = prompt("给当前 API 配置方案起个名字：", "新方案"); if(!name) return; apiPresets.push({ name: name, url: document.getElementById('api-url').value.trim(), key: document.getElementById('api-key').value.trim(), model: document.getElementById('api-model').value.trim() }); activePresetIdx = apiPresets.length - 1; saveConfigData(); renderPresetUI(); showToast("✅ 新 API 方案已保存"); }
     function deleteCurrentPreset() { if(apiPresets.length <= 1) return showToast("⚠️ 至少需要保留一个 API 方案"); if(confirm(`确定删除方案【${apiPresets[activePresetIdx].name}】吗？`)) { apiPresets.splice(activePresetIdx, 1); activePresetIdx = 0; saveConfigData(); renderPresetUI(); } }
     function renderPresetUI() { const sel = document.getElementById('preset-select'); sel.innerHTML = ''; apiPresets.forEach((p, i) => sel.add(new Option(p.name, i))); sel.selectedIndex = activePresetIdx; document.getElementById('api-key').value = apiPresets[activePresetIdx].key; document.getElementById('api-url').value = apiPresets[activePresetIdx].url; document.getElementById('api-model').value = apiPresets[activePresetIdx].model; }
-    async function fetchModelsForPreset() { showToast("正在获取模型列表..."); try { const r = await fetch(`${GS.url}/models`, {headers: {'Authorization': `Bearer ${GS.key}`}}); const d = await r.json(); const dl = document.getElementById('model-list'); dl.innerHTML = ''; (d.data || d).forEach(m => { const opt = document.createElement('option'); opt.value = m.id; dl.appendChild(opt); }); showToast("✅ 刷新成功，请点击下拉选择"); } catch(e) { alert(e.message); } }
+    
+    // 🚀 修复模型刷新逻辑
+    async function fetchModelsForPreset() { 
+        showToast("正在获取模型列表..."); 
+        try { 
+            const r = await fetch(`${GS.url}/models`, {headers: {'Authorization': `Bearer ${GS.key}`}}); 
+            const d = await r.json(); 
+            const dl = document.getElementById('model-list-select'); 
+            dl.innerHTML = '<option value="">请选择下拉模型...</option>'; 
+            (d.data || d).forEach(m => { dl.add(new Option(m.id, m.id)); }); 
+            showToast("✅ 刷新成功，请点击左侧下拉框选择"); 
+        } catch(e) { 
+            alert("获取失败，请检查 URL 和 Key 是否正确\n" + e.message); 
+        } 
+    }
 
     function renderPersonas() {
         const c = document.getElementById('persona-list-container'); c.innerHTML = '';
