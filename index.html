@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V35 (绝杀Bug版)</title>
+    <title>SoulReader V36 (绝美且无Bug版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -410,21 +410,56 @@
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
     function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
+    // 🔥 完美重写的高亮恢复系统（支持换行、跨段落）
     function restoreHighlights(notes) {
-        if(!notes || !notes.length) return; const root = document.getElementById('reader-content'); const content = root.innerHTML; const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false); const textNodes =[]; let node; while(node = walker.nextNode()) textNodes.push(node);
-        notes.forEach(note => { if(content.includes(`window.openSidebarById('${note.id}')`)) return; for(let tn of textNodes) { const idx = tn.nodeValue.indexOf(note.quote); if(idx !== -1) { try { const range = document.createRange(); range.setStart(tn, idx); range.setEnd(tn, idx + note.quote.length); const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = note.quote; wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); }; range.deleteContents(); range.insertNode(wrapper); break; } catch(e) {} } } });
+        if(!notes || !notes.length) return; 
+        const root = document.getElementById('reader-content'); 
+        notes.forEach(note => { 
+            if(root.innerHTML.includes(`data-nid="${note.id}"`)) return; 
+            
+            // 将长文本智能拆分成短句，完美跨过段落符号
+            const chunks = note.quote.split(/\n+/).map(s => s.trim()).filter(s => s.length > 0);
+            
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false); 
+            const textNodes =[]; let node; 
+            while(node = walker.nextNode()) textNodes.push(node);
+            
+            for(let chunk of chunks) {
+                for(let tn of textNodes) {
+                    const idx = tn.nodeValue.indexOf(chunk);
+                    if(idx !== -1) {
+                        try { 
+                            const range = document.createRange(); 
+                            range.setStart(tn, idx); range.setEnd(tn, idx + chunk.length); 
+                            const wrapper = document.createElement('mark'); 
+                            wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = chunk; 
+                            wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); }; 
+                            range.deleteContents(); range.insertNode(wrapper); 
+                        } catch(e) {}
+                        break; // 找到这段话后停止，避免把书里所有一样的字全画上线
+                    }
+                }
+            }
+        });
     }
 
     document.addEventListener('selectionchange', () => { const s = window.getSelection(); const d = document.getElementById('floating-dock'); if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible'); else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300); });
-    const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); createNoteWithSelection(range, text, mode); };
-    ['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
+    const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); createNoteWithSelection(range, text, mode); };['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
 
+    // 🔥 重写的创建划线系统（不再引发浏览器冲突，稳如泰山）
     async function createNoteWithSelection(range, text, mode) {
         const allNotes = await Store.getAll('notes'); if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) { window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; }
         document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
-        try { const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = nid; wrapper.innerText = text; wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.deleteContents(); range.insertNode(wrapper); } 
-        catch(e) { const anchor = document.createElement('span'); anchor.className = 'ai-anchor'; anchor.innerText = '📝'; anchor.dataset.nid = nid; anchor.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.collapse(true); range.insertNode(anchor); }
-        window.getSelection().removeAllRanges(); const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; await Store.put('notes', note); if(mode=='ai') triggerAI(note); else openSidebar(note);
+        
+        // 核心修复：直接清除浏览器原生的丑陋选区，改用我们的智能高亮系统来画线！
+        window.getSelection().removeAllRanges(); 
+        const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; 
+        await Store.put('notes', note); 
+        
+        // 瞬间画上稳固的下划线
+        restoreHighlights([note]);
+        
+        if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
 
     function openSidebar(n){activeNoteId=n.id;document.getElementById('sidebar').classList.add('active');document.getElementById('chat-quote').innerText=n.quote;renderChat(n.messages)}
@@ -461,7 +496,7 @@
     function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; }
     function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
 
-    // 🚀 修复核心：把原文片段写死进 System Prompt，强制投喂给AI
+    // 🧠 强制洗脑法：把原文绝对地烙印在 AI 的记忆深处
     async function triggerAI(n) {
         if(!GS.key) return showToast("⚠️ 请先在设置中配置 API Key");
         openSidebar(n); const l=document.getElementById('chat-list');
@@ -469,11 +504,11 @@
         
         const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); 
         
-        // 这一段是真正的修复点：把原文放进背景板里
-        const systemPrompt = `${GS.persona}\n\n【非常重要：当前用户讨论的原文片段】\n"${n.quote}"\n\n【书籍背景与记忆】\n${currentBook.context}\n${memoryText}`;
+        // ✨ 重磅补丁：在这里直接强制喂给 AI 划线原文！
+        const systemPrompt = `${GS.persona}\n\n【最高指令：当前用户正在讨论的原文片段如下，你必须结合这段原文进行回复！】\n"${n.quote}"\n\n【当前全书背景与长期记忆】\n${currentBook.context}\n${memoryText}`;
         
         const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; 
-        if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文片段发表你的看法。`});
+        if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文发表你的看法。`});
         
         let fullText = "";
         try { await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; }); loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`; n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n); } 
