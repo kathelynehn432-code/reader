@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V33 (精装多线版)</title>
+    <title>SoulReader V33 (清透拟态版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -11,61 +11,86 @@
 
     <style>
         :root { 
-            --bg: #f8f5e6; --accent: #d35400; --text: #2c3e50; 
+            --bg: #f8f5e6; /* 你喜欢的护眼米黄 */
+            --accent: #d35400; --text: #2c3e50; 
             --mark-bg: #ffeaa7; --ai-bubble: #ffffff; --user-bubble: #e17055; 
             --safe-bottom: env(safe-area-inset-bottom);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'PingFang SC', serif; margin: 0; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; display: flex; flex-direction: column; padding-bottom: var(--safe-bottom); }
+        body { font-family: 'PingFang SC', serif; margin: 0; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; display: flex; flex-direction: column; padding-bottom: 0; }
         
-        /* 软化布局：去掉硬线条，增加毛玻璃和阴影 */
-        #tab-bar { height: 65px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: none; box-shadow: 0 -4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 900; border-radius: 25px 25px 0 0; padding-bottom: max(0px, var(--safe-bottom)); }
-        .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #a4b0be; flex: 1; height: 100%; justify-content: center; transition: all 0.2s; }
-        .tab-item:active { transform: scale(0.92); }
-        .tab-item.active { color: var(--accent); font-weight: bold; }
+        /* 📱 底部悬浮毛玻璃胶囊导航 (和你截图一模一样) */
+        #tab-bar { 
+            position: fixed; 
+            bottom: max(20px, calc(20px + var(--safe-bottom))); 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 90%; 
+            max-width: 400px; 
+            height: 68px; 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.8); 
+            border-radius: 35px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            z-index: 900; 
+        }
+        .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #888; flex: 1; height: 100%; justify-content: center; transition: all 0.2s; }
+        .tab-item:active { transform: scale(0.9); }
+        .tab-item.active { color: #222; font-weight: bold; }
+        .tab-icon { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2.2; margin-bottom: 3px; }
+
         #main-view { flex: 1; overflow: hidden; position: relative; }
-        .view-page { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .view-page { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 120px; }
         .view-page.active { display: flex; }
 
         /* 通用软化输入框和卡片 */
-        input, select, textarea { width: 100%; border: none; background: #f0f0f0; border-radius: 12px; padding: 12px 15px; font-size: 15px; font-family: inherit; margin-top: 5px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s; }
-        input:focus, select:focus, textarea:focus { outline: none; background: #fff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02), 0 0 0 2px var(--accent); }
-        .setting-card { background: #fff; padding: 18px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); margin-bottom: 20px; border: none; }
-        .btn { background: #2d3436; color: white; border: none; padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; border: none; background: rgba(255,255,255,0.6); border-radius: 12px; padding: 12px 15px; font-size: 15px; font-family: inherit; margin-top: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        input:focus, select:focus, textarea:focus { outline: none; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05), 0 0 0 2px rgba(211,84,0,0.2); }
+        .setting-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 18px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.6); }
+        .btn { background: #2d3436; color: white; border: none; padding: 10px 18px; border-radius: 15px; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn.danger { background: #ff7675; color: white; }
 
+        /* 📚 修复书架尺寸：退回原来小巧精致的大小 */
+        #shelf-list { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px; padding-bottom: 150px; }
+        .book-cover { aspect-ratio: 2/3; border-radius: 10px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 6px 15px rgba(0,0,0,0.12); cursor: pointer; transition: transform 0.2s; }
+        .book-cover:active { transform: scale(0.95); }
+
         /* 阅读器软化 */
-        #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: var(--safe-bottom); }
+        #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; }
         #reader-overlay.active { display: flex; }
-        #reader-header { height: 60px; background: rgba(248,245,230,0.92); backdrop-filter: blur(10px); border-bottom: none; box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 20px 20px; margin-bottom: 5px; z-index: 10; }
+        #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
         #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; }
 
         /* 侧边栏软化 */
-        #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: #fff; z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
+        #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
         #toc-sidebar.active { transform: translateX(0); }
         .toc-item { padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 15px; color: #444; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s; }
         .toc-item:active { background: #f8f8f8; }
 
-        #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: #f9f9f9; z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
+        #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: #fcfcfc; z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
         #sidebar.active { transform: translateX(0); }
         
         /* 聊天气泡圆润化 */
         .msg-container { margin-bottom: 18px; display: flex; flex-direction: column; width: 100%; }
-        .msg-bubble { max-width: 85%; padding: 14px 16px; border-radius: 20px; font-size: 15px; line-height: 1.6; position: relative; word-wrap: break-word; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .msg-bubble { max-width: 85%; padding: 14px 16px; border-radius: 20px; font-size: 15px; line-height: 1.6; position: relative; word-wrap: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
         .msg-container.ai { align-items: flex-start; }
         .msg-container.ai .msg-bubble { background: var(--ai-bubble); border-bottom-left-radius: 6px; }
         .msg-container.user { align-items: flex-end; }
         .msg-container.user .msg-bubble { background: var(--user-bubble); color: white; border-bottom-right-radius: 6px; }
         
-        /* 操作栏 */
         .msg-actions { display: flex; gap: 15px; margin-top: 8px; padding: 0 8px; font-size: 12px; color: #a4b0be; }
         .action-link { cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color 0.2s; }
         .action-link:hover { color: var(--accent); }
         .action-link.danger { color: #ff7675; }
 
         /* 悬浮坞软化 */
-        #floating-dock { position: fixed; right: -250px; top: 40%; background: rgba(45,52,54,0.9); backdrop-filter: blur(8px); color: white; border-radius: 25px 0 0 25px; padding: 5px; z-index: 3000; transition: right 0.2s cubic-bezier(0.25, 1, 0.5, 1); display: flex; flex-direction: column; gap: 1px; border-left: 4px solid var(--accent); box-shadow: -5px 10px 30px rgba(0,0,0,0.15); }
+        #floating-dock { position: fixed; right: -250px; top: 40%; background: rgba(45,52,54,0.85); backdrop-filter: blur(10px); color: white; border-radius: 25px 0 0 25px; padding: 5px; z-index: 3000; transition: right 0.2s cubic-bezier(0.25, 1, 0.5, 1); display: flex; flex-direction: column; gap: 1px; border-left: 4px solid var(--accent); box-shadow: -5px 10px 30px rgba(0,0,0,0.15); }
         #floating-dock.visible { right: 0; }
         .dock-btn { padding: 14px 22px; font-weight: bold; font-size: 15px; white-space: nowrap; cursor: pointer; user-select: none; transition: background 0.2s; border-radius: 20px; }
         .dock-btn:active { background: rgba(255,255,255,0.1); }
@@ -77,30 +102,25 @@
         #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); color: white; padding: 16px 30px; border-radius: 30px; font-size: 15px; z-index: 9999; display: none; text-align:center; max-width: 80%; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
         /* 模态框 */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 5000; justify-content: center; align-items: flex-end; }
-        .modal-box { background: var(--bg); width: 100%; height: 90vh; border-radius: 25px 25px 0 0; display:flex; flex-direction:column; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: var(--safe-bottom); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 5000; justify-content: center; align-items: flex-end; }
+        .modal-box { background: var(--bg); width: 100%; height: 90vh; border-radius: 30px 30px 0 0; display:flex; flex-direction:column; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: var(--safe-bottom); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
-        /* 书架 */
-        #shelf-list { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 18px; padding-bottom: 100px; }
-        .book-cover { aspect-ratio: 2/3; border-radius: 12px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; text-align: center; position: relative; box-shadow: 0 6px 15px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
-        .book-cover:active { transform: scale(0.95); }
 
         /* Timeline Groups */
-        .tl-book-group { background: white; border-radius: 18px; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.03); overflow: hidden; border: none; }
-        .tl-header { padding: 18px; display: flex; justify-content: space-between; align-items: center; background: #fff; cursor: pointer; transition: background 0.2s; }
+        .tl-book-group { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: 18px; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid rgba(255,255,255,0.8); }
+        .tl-header { padding: 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
         .tl-title { font-weight: bold; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px; }
         .tl-arrow { transition: transform 0.3s ease; color: #a4b0be; font-size: 12px; }
         .tl-book-group.collapsed .tl-notes-container { display: none; }
         .tl-book-group.collapsed .tl-arrow { transform: rotate(-90deg); }
-        .tl-note-item { padding: 18px; border-top: 1px solid rgba(0,0,0,0.03); transition: background 0.2s; position: relative; background: #fafafa; }
+        .tl-note-item { padding: 18px; border-top: 1px solid rgba(0,0,0,0.03); transition: background 0.2s; position: relative; }
 
         /* Action Sheet */
-        #action-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #f9f9f9; z-index: 6000; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.15); transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: max(20px, var(--safe-bottom)); }
+        #action-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #f9f9f9; z-index: 6000; border-radius: 30px 30px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.15); transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: max(20px, var(--safe-bottom)); }
         #action-sheet.active { transform: translateY(0); }
         .as-btn { display: block; width: 100%; padding: 20px; text-align: center; font-size: 16px; border: none; background: white; color: #333; margin-bottom: 2px; }
         .as-btn.danger { color: #ff7675; font-weight: bold; }
-        #as-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 5999; display: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(2px); }
+        #as-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 5999; display: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(3px); }
         #as-mask.active { display: block; opacity: 1; }
     </style>
 </head>
@@ -111,48 +131,70 @@
 <!-- Action Sheet -->
 <div id="as-mask" onclick="closeActionSheet()"></div>
 <div id="action-sheet">
-    <div style="padding:15px; text-align:center; color:#999; font-size:12px; background:white; border-radius:25px 25px 0 0">选择操作</div>
+    <div style="padding:15px; text-align:center; color:#999; font-size:12px; background:white; border-radius:30px 30px 0 0">选择操作</div>
     <button class="as-btn danger" id="as-del-btn">🗑️ 删除这条笔记</button>
     <div style="height:8px;background:#f9f9f9"></div>
     <button class="as-btn" style="border-radius:0" onclick="closeActionSheet()">取消</button>
 </div>
 
 <!-- Loader -->
-<div id="loader" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(5px);z-index:6000;justify-content:center;align-items:center;flex-direction:column">
+<div id="loader" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);z-index:6000;justify-content:center;align-items:center;flex-direction:column">
     <div style="font-size:35px;animation:spin 1s linear infinite">🧠</div>
     <div style="margin:20px;color:#d35400;font-weight:bold" id="loader-text">AI 正在思考...</div>
     <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
-<!-- Tab Bar -->
+<!-- 📱 全新拟态悬浮导航栏 -->
 <div id="tab-bar">
-    <div class="tab-item active" onclick="switchTab('shelf')"><div style="font-size:22px;margin-bottom:2px">📚</div><div>书架</div></div>
-    <div class="tab-item" onclick="switchTab('timeline')"><div style="font-size:22px;margin-bottom:2px">📂</div><div>归档</div></div>
-    <!-- 人设面板 -->
-    <div class="tab-item" onclick="switchTab('persona')"><div style="font-size:22px;margin-bottom:2px">🎭</div><div>人设</div></div>
-    <div class="tab-item" onclick="switchTab('settings')"><div style="font-size:22px;margin-bottom:2px">⚙️</div><div>配置</div></div>
+    <!-- 书架 (极简SVG图标) -->
+    <div class="tab-item active" onclick="switchTab('shelf')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <div style="margin-top:2px">书架</div>
+    </div>
+    <!-- 归档 (气泡SVG图标) -->
+    <div class="tab-item" onclick="switchTab('timeline')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <div style="margin-top:2px">归档</div>
+    </div>
+    <!-- 🎭 人设 (可爱的颜文字！) -->
+    <div class="tab-item" onclick="switchTab('persona')">
+        <div style="font-size:18px; font-weight:normal; line-height:24px; color:inherit">( ˶ˆᗜˆ˵ )</div>
+        <div style="margin-top:2px">人设</div>
+    </div>
+    <!-- 设置 (齿轮SVG图标) -->
+    <div class="tab-item" onclick="switchTab('settings')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <div style="margin-top:2px">配置</div>
+    </div>
 </div>
 
 <!-- Main Views -->
 <div id="main-view">
     <!-- 📚 书架 -->
     <div id="view-shelf" class="view-page active">
-        <div style="padding:25px 20px 10px; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:bold;font-size:1.4rem;color:var(--accent)">我的藏书</span>
-            <button class="btn" style="background:white;color:var(--accent);border:2px solid var(--accent);box-shadow:none" onclick="document.getElementById('file-in').click()">➕ 导入文件</button>
+        <div style="padding:30px 20px 10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:bold;font-size:1.4rem;color:var(--text)">我的藏书</span>
+            <button class="btn" style="background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);color:var(--text);box-shadow:none" onclick="document.getElementById('file-in').click()">➕ 导入文件</button>
             <input type="file" id="file-in" hidden accept=".txt,.pdf,.epub">
         </div>
         <div id="shelf-list"></div>
-        <div id="empty-tip" style="margin:20px;background:white;padding:40px;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,0.03);text-align:center;color:#999;display:none;line-height:1.8">
-            <div style="font-size:40px;margin-bottom:10px">📭</div>
+        <div id="empty-tip" style="margin:20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(10px);padding:40px;border-radius:20px;text-align:center;color:#888;display:none;line-height:1.8">
+            <div style="font-size:30px;margin-bottom:10px">☁️</div>
             书架空空的哦~<br>点右上角导入你的第一本书吧！
         </div>
     </div>
     
     <!-- 📂 归档 -->
     <div id="view-timeline" class="view-page">
-        <div style="padding:15px 20px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);box-shadow:0 4px 15px rgba(0,0,0,0.03);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 20px 20px">
-            <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:#d35400;font-size:16px;padding:0;box-shadow:none;width:auto">
+        <div style="padding:20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 25px 25px">
+            <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:var(--text);font-size:16px;padding:0;box-shadow:none;width:auto">
                 <option value="all">📂 全部笔记归档</option>
             </select>
             <span style="font-size:12px;color:#a4b0be">长按管理</span>
@@ -162,10 +204,10 @@
 
     <!-- 🎭 人设 -->
     <div id="view-persona" class="view-page">
-        <div style="padding:25px 20px 100px;">
+        <div style="padding:30px 20px 100px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                <span style="font-weight:bold;font-size:1.4rem;color:var(--accent)">AI 人设库</span>
-                <button class="btn" style="background:var(--accent)" onclick="addNewPersona()">➕ 新增人设</button>
+                <span style="font-weight:bold;font-size:1.4rem;color:var(--text)">AI 人设库</span>
+                <button class="btn" style="background:rgba(255,255,255,0.7);color:var(--text);box-shadow:none" onclick="addNewPersona()">➕ 新增人设</button>
             </div>
             <div id="persona-list-container" style="display:flex;flex-direction:column;gap:15px;"></div>
         </div>
@@ -173,8 +215,8 @@
 
     <!-- ⚙️ 设置 -->
     <div id="view-settings" class="view-page">
-        <div style="padding:25px 20px 100px;">
-            <span style="font-weight:bold;font-size:1.4rem;color:var(--accent);display:block;margin-bottom:20px">系统配置</span>
+        <div style="padding:30px 20px 100px;">
+            <span style="font-weight:bold;font-size:1.4rem;color:var(--text);display:block;margin-bottom:20px">系统配置</span>
             
             <!-- API 多开方案 -->
             <div class="setting-card">
@@ -184,7 +226,7 @@
                     <button class="btn" style="background:#e67e22" onclick="savePresetAsNew()">💾 另存</button>
                     <button class="btn danger" style="padding:10px 15px" onclick="deleteCurrentPreset()">🗑️</button>
                 </div>
-                <div style="background:#f9f9f9;padding:15px;border-radius:15px">
+                <div style="background:rgba(255,255,255,0.5);padding:15px;border-radius:15px">
                     <label style="font-size:13px;color:#666">API Key</label>
                     <input type="password" id="api-key" onchange="updateCurrentPreset()" placeholder="sk-...">
                     <label style="font-size:13px;color:#666;display:block;margin-top:10px">API URL</label>
@@ -199,10 +241,10 @@
             </div>
 
             <!-- TXT编码 -->
-            <div class="setting-card" style="background:#fff8e1">
-                <label style="font-weight:bold;display:block;margin-bottom:5px;color:#d35400">📄 导入乱码修复</label>
+            <div class="setting-card">
+                <label style="font-weight:bold;display:block;margin-bottom:5px;color:var(--text)">📄 导入乱码修复</label>
                 <div style="font-size:12px;color:#888;margin-bottom:10px">如果导入的TXT是乱码，请切换为 GBK 后重新导入</div>
-                <select id="encoding-select" onchange="GS.encoding = this.value" style="margin:0;background:white">
+                <select id="encoding-select" onchange="GS.encoding = this.value" style="margin:0">
                     <option value="utf-8">UTF-8 (默认/现代文件)</option>
                     <option value="gbk">GBK (中文/老旧文件)</option>
                 </select>
@@ -210,8 +252,8 @@
             
             <!-- 数据库 -->
             <div class="setting-card">
-                <label style="font-weight:bold;color:#2c3e50">💾 旧数据找回</label>
-                <div style="font-size:12px;color:#a4b0be;margin-bottom:10px;line-height:1.5">
+                <label style="font-weight:bold;color:var(--text)">💾 旧数据找回</label>
+                <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.5">
                     书不见了？可能在旧仓库里。<br>试试输入：<b>SoulReaderV20</b> 找回旧版数据。
                 </div>
                 <div style="display:flex;gap:10px">
@@ -228,17 +270,17 @@
 <div id="reader-overlay">
     <div id="reader-header">
         <button class="btn" style="background:transparent;color:#333;font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
-        <button class="btn" style="background:transparent;color:#d35400;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
+        <button class="btn" style="background:transparent;color:#888;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
         <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
-        <button class="btn" style="background:#ffeaa7;color:#d35400;padding:6px 14px;font-size:13px;box-shadow:none" onclick="openBookConfig()">🧠 记忆</button>
+        <button class="btn" style="background:rgba(255,255,255,0.8);color:#555;padding:6px 14px;font-size:13px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠 记忆</button>
     </div>
     
     <div id="toc-sidebar">
-        <div style="padding:18px 20px;background:#f8f5e6;box-shadow:0 2px 10px rgba(0,0,0,0.02);display:flex;justify-content:space-between;align-items:center;height:60px;">
-            <span style="font-weight:bold;color:#d35400;font-size:16px">📑 智能目录</span>
+        <div style="padding:18px 20px;background:rgba(248,245,230,0.5);display:flex;justify-content:space-between;align-items:center;height:60px;">
+            <span style="font-weight:bold;color:#444;font-size:16px">📑 智能目录</span>
             <button onclick="document.getElementById('toc-sidebar').classList.remove('active')" style="border:none;background:none;font-size:26px;color:#a4b0be;cursor:pointer;">×</button>
         </div>
-        <div id="toc-list" style="flex:1;overflow-y:auto;background:#fff;padding-bottom:var(--safe-bottom);"></div>
+        <div id="toc-list" style="flex:1;overflow-y:auto;background:transparent;padding-bottom:var(--safe-bottom);"></div>
     </div>
 
     <div id="reader-content" onscroll="handleScroll()"></div>
@@ -251,26 +293,26 @@
 
 <!-- Sidebar -->
 <div id="sidebar">
-    <div style="padding:15px 20px;background:white;box-shadow:0 4px 15px rgba(0,0,0,0.03);display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
-        <span style="font-weight:bold;font-size:16px;color:var(--accent)">📝 批注详情</span>
+    <div style="padding:15px 20px;background:white;display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
+        <span style="font-weight:bold;font-size:16px;color:var(--text)">📝 批注详情</span>
         <div style="display:flex;gap:12px;align-items:center">
-            <button class="btn" style="background:#ffeaa7;color:#d35400;padding:6px 12px;font-size:12px;box-shadow:none" onclick="summarizeThread()">✨ 存入记忆</button>
+            <button class="btn" style="background:#f0f0f0;color:#444;padding:6px 12px;font-size:12px;box-shadow:none" onclick="summarizeThread()">✨ 存入记忆</button>
             <button onclick="document.getElementById('sidebar').classList.remove('active')" style="border:none;background:none;font-size:26px;color:#a4b0be;padding:0">×</button>
         </div>
     </div>
     
     <div id="chat-quote-container" style="padding:18px 20px;background:#fdfdfd;box-shadow:inset 0 -2px 10px rgba(0,0,0,0.01);">
         <div style="font-size:12px;color:#a4b0be;margin-bottom:8px">原文摘录：</div>
-        <div id="chat-quote" style="font-style:italic;color:#555;font-size:15px;line-height:1.5;max-height:85px;overflow-y:auto;border-left:4px solid #ffeaa7;padding-left:10px"></div>
+        <div id="chat-quote" style="font-style:italic;color:#555;font-size:15px;line-height:1.5;max-height:85px;overflow-y:auto;border-left:4px solid #ddd;padding-left:10px"></div>
     </div>
 
-    <div id="chat-list" style="flex:1;overflow-y:auto;padding:20px;background:#f4f4f4"></div>
+    <div id="chat-list" style="flex:1;overflow-y:auto;padding:20px;background:transparent"></div>
 
-    <div style="padding:15px;background:white;box-shadow:0 -5px 20px rgba(0,0,0,0.03);display:flex;flex-direction:column;gap:10px;padding-bottom:calc(15px + var(--safe-bottom))">
+    <div style="padding:15px;background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px;padding-bottom:calc(15px + var(--safe-bottom))">
         <textarea id="chat-input" rows="1" placeholder="跟当前人设聊聊这段话..." style="margin:0;min-height:45px;resize:none;background:#f5f6fa;border-radius:20px"></textarea>
         <div style="display:flex;justify-content:flex-end;gap:10px">
             <button class="btn" style="background:#a4b0be;padding:8px 18px;border-radius:20px;box-shadow:none" onclick="sendMsg(false)">仅记录</button>
-            <button class="btn" style="background:var(--accent);padding:8px 20px;border-radius:20px" onclick="sendMsg(true)">✨ 发送给AI</button>
+            <button class="btn" style="background:var(--text);padding:8px 20px;border-radius:20px" onclick="sendMsg(true)">✨ 发送给AI</button>
         </div>
     </div>
 </div>
@@ -278,19 +320,19 @@
 <!-- Config Modal -->
 <div id="book-config-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
     <div class="modal-box">
-        <div style="padding:20px;box-shadow:0 4px 15px rgba(0,0,0,0.03);display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:25px 25px 0 0">
-            <span style="font-weight:bold;font-size:16px;color:var(--accent)">📘 本书大脑 (Memory)</span>
+        <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;background:transparent;border-radius:30px 30px 0 0">
+            <span style="font-weight:bold;font-size:16px;color:var(--text)">📘 本书大脑 (Memory)</span>
             <span onclick="document.getElementById('book-config-modal').style.display='none'" style="cursor:pointer;font-size:26px;color:#a4b0be">×</span>
         </div>
-        <div style="flex:1;overflow-y:auto;padding:20px;background:#fcfcfc">
+        <div style="flex:1;overflow-y:auto;padding:20px;">
             <div class="setting-card">
                  <label style="font-size:14px;font-weight:bold;display:block;margin-bottom:10px;color:#2c3e50">📚 书籍背景 / 摘要</label>
-                 <textarea id="current-book-context" rows="3" placeholder="这本书讲了什么..." onchange="saveBookConfig()" style="background:#f5f6fa"></textarea>
-                 <button class="btn" style="width:100%;margin-top:12px;background:#ffeaa7;color:#d35400;box-shadow:none" onclick="autoAnalyze()">✨ AI 自动提取全书背景</button>
+                 <textarea id="current-book-context" rows="3" placeholder="这本书讲了什么..." onchange="saveBookConfig()" style="background:rgba(255,255,255,0.5)"></textarea>
+                 <button class="btn" style="width:100%;margin-top:12px;background:rgba(255,255,255,0.8);color:#444;box-shadow:none" onclick="autoAnalyze()">✨ AI 自动提取全书背景</button>
             </div>
             <div style="font-size:14px;font-weight:bold;margin-bottom:15px;color:#2c3e50;padding-left:5px">🧠 长期记忆卡片 (与AI交流时生效)</div>
             <div id="memory-list"></div>
-            <button class="btn" style="width:100%;margin-top:10px;background:transparent;color:#a4b0be;border:2px dashed #ddd;box-shadow:none" onclick="addEmptyMemory()">+ 手动添加一条记忆</button>
+            <button class="btn" style="width:100%;margin-top:10px;background:rgba(255,255,255,0.5);color:#888;box-shadow:none" onclick="addEmptyMemory()">+ 手动添加一条记忆</button>
         </div>
     </div>
 </div>
@@ -307,14 +349,14 @@
     let activePresetIdx = parseInt(localStorage.getItem('sr_active_preset_idx')) || 0;
     if(!apiPresets[activePresetIdx]) activePresetIdx = 0;
 
-    // 🎭 Personas Logic (仅保留一个默认空人设)
+    // 🎭 Personas Logic
     let personas = JSON.parse(localStorage.getItem('sr_personas')) ||[
         { name: "默认人设", content: "你是一个客观、理性的读书助手。" }
     ];
     let activePersonaIdx = parseInt(localStorage.getItem('sr_active_persona_idx')) || 0;
     if(!personas[activePersonaIdx]) activePersonaIdx = 0;
 
-    // 全局 GS 对象 (动态响应当前选择)
+    // 全局 GS 对象
     const GS = {
         get url() { return apiPresets[activePresetIdx].url || 'https://api.openai.com/v1'; },
         get key() { return apiPresets[activePresetIdx].key || ''; },
@@ -324,77 +366,29 @@
         set encoding(v) { localStorage.setItem('sr_encoding', v); }
     };
 
-    // 初始化 UI
-    renderPresetUI();
-    renderPersonas();
+    renderPresetUI(); renderPersonas();
     document.getElementById('encoding-select').value = GS.encoding;
     document.getElementById('db-name-input').value = DB_NAME;
     document.getElementById('current-db-display').innerText = DB_NAME;
 
-    // --- API Preset Functions ---
-    function updateCurrentPreset() {
-        apiPresets[activePresetIdx].key = document.getElementById('api-key').value.trim();
-        apiPresets[activePresetIdx].url = document.getElementById('api-url').value.trim();
-        apiPresets[activePresetIdx].model = document.getElementById('api-model').value.trim();
-        saveConfigData();
-    }
-    function switchPreset() {
-        activePresetIdx = document.getElementById('preset-select').selectedIndex;
-        saveConfigData();
-        renderPresetUI();
-    }
-    function savePresetAsNew() {
-        const name = prompt("给当前 API 配置方案起个名字：", "新方案");
-        if(!name) return;
-        apiPresets.push({ name: name, url: document.getElementById('api-url').value.trim(), key: document.getElementById('api-key').value.trim(), model: document.getElementById('api-model').value.trim() });
-        activePresetIdx = apiPresets.length - 1;
-        saveConfigData();
-        renderPresetUI();
-        showToast("✅ 新 API 方案已保存");
-    }
-    function deleteCurrentPreset() {
-        if(apiPresets.length <= 1) return showToast("⚠️ 至少需要保留一个 API 方案");
-        if(confirm(`确定删除方案【${apiPresets[activePresetIdx].name}】吗？`)) {
-            apiPresets.splice(activePresetIdx, 1);
-            activePresetIdx = 0;
-            saveConfigData();
-            renderPresetUI();
-        }
-    }
-    function renderPresetUI() {
-        const sel = document.getElementById('preset-select'); sel.innerHTML = '';
-        apiPresets.forEach((p, i) => sel.add(new Option(p.name, i)));
-        sel.selectedIndex = activePresetIdx;
-        document.getElementById('api-key').value = apiPresets[activePresetIdx].key;
-        document.getElementById('api-url').value = apiPresets[activePresetIdx].url;
-        document.getElementById('api-model').value = apiPresets[activePresetIdx].model;
-    }
-    async function fetchModelsForPreset() {
-        showToast("正在获取模型列表...");
-        try {
-            const r = await fetch(`${GS.url}/models`, {headers: {'Authorization': `Bearer ${GS.key}`}});
-            const d = await r.json();
-            const dl = document.getElementById('model-list'); dl.innerHTML = '';
-            (d.data || d).forEach(m => { const opt = document.createElement('option'); opt.value = m.id; dl.appendChild(opt); });
-            showToast("✅ 刷新成功，请点击输入框下拉选择");
-        } catch(e) { alert(e.message); }
-    }
+    function updateCurrentPreset() { apiPresets[activePresetIdx].key = document.getElementById('api-key').value.trim(); apiPresets[activePresetIdx].url = document.getElementById('api-url').value.trim(); apiPresets[activePresetIdx].model = document.getElementById('api-model').value.trim(); saveConfigData(); }
+    function switchPreset() { activePresetIdx = document.getElementById('preset-select').selectedIndex; saveConfigData(); renderPresetUI(); }
+    function savePresetAsNew() { const name = prompt("给当前 API 配置方案起个名字：", "新方案"); if(!name) return; apiPresets.push({ name: name, url: document.getElementById('api-url').value.trim(), key: document.getElementById('api-key').value.trim(), model: document.getElementById('api-model').value.trim() }); activePresetIdx = apiPresets.length - 1; saveConfigData(); renderPresetUI(); showToast("✅ 新 API 方案已保存"); }
+    function deleteCurrentPreset() { if(apiPresets.length <= 1) return showToast("⚠️ 至少需要保留一个 API 方案"); if(confirm(`确定删除方案【${apiPresets[activePresetIdx].name}】吗？`)) { apiPresets.splice(activePresetIdx, 1); activePresetIdx = 0; saveConfigData(); renderPresetUI(); } }
+    function renderPresetUI() { const sel = document.getElementById('preset-select'); sel.innerHTML = ''; apiPresets.forEach((p, i) => sel.add(new Option(p.name, i))); sel.selectedIndex = activePresetIdx; document.getElementById('api-key').value = apiPresets[activePresetIdx].key; document.getElementById('api-url').value = apiPresets[activePresetIdx].url; document.getElementById('api-model').value = apiPresets[activePresetIdx].model; }
+    async function fetchModelsForPreset() { showToast("正在获取模型列表..."); try { const r = await fetch(`${GS.url}/models`, {headers: {'Authorization': `Bearer ${GS.key}`}}); const d = await r.json(); const dl = document.getElementById('model-list'); dl.innerHTML = ''; (d.data || d).forEach(m => { const opt = document.createElement('option'); opt.value = m.id; dl.appendChild(opt); }); showToast("✅ 刷新成功，请点击下拉选择"); } catch(e) { alert(e.message); } }
 
-    // --- Persona Functions ---
     function renderPersonas() {
         const c = document.getElementById('persona-list-container'); c.innerHTML = '';
         personas.forEach((p, idx) => {
             const isActive = idx === activePersonaIdx;
-            const div = document.createElement('div');
-            div.className = 'setting-card';
-            div.style.padding = '20px';
-            div.style.border = isActive ? '2px solid var(--accent)' : '2px solid transparent';
+            const div = document.createElement('div'); div.className = 'setting-card'; div.style.padding = '20px'; div.style.border = isActive ? '2px solid rgba(0,0,0,0.1)' : '1px solid transparent'; div.style.background = isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)';
             div.innerHTML = `
-                <div style="font-weight:bold;font-size:16px;color:#d35400;margin-bottom:10px;">${p.name} ${isActive?'<span style="font-size:11px;background:#ffeaa7;color:#d35400;padding:3px 8px;border-radius:12px;margin-left:8px;vertical-align:middle">当前生效中</span>':''}</div>
+                <div style="font-weight:bold;font-size:16px;color:var(--text);margin-bottom:10px;">${p.name} ${isActive?'<span style="font-size:11px;background:#f0f0f0;color:#555;padding:3px 8px;border-radius:12px;margin-left:8px;vertical-align:middle">当前生效中</span>':''}</div>
                 <div style="font-size:14px;color:#666;line-height:1.6;margin-bottom:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div>
                 <div style="display:flex;gap:10px;">
-                    ${!isActive ? `<button class="btn" style="flex:1;background:#ffeaa7;color:#d35400;box-shadow:none" onclick="usePersona(${idx})">✅ 设为当前</button>` : ''}
-                    <button class="btn" style="background:#f0f0f0;color:#555;padding:10px 15px;box-shadow:none" onclick="editPersona(${idx})">✏️ 编辑</button>
+                    ${!isActive ? `<button class="btn" style="flex:1;background:rgba(255,255,255,0.8);color:#333;box-shadow:none;border:1px solid #ddd" onclick="usePersona(${idx})">✅ 设为当前</button>` : ''}
+                    <button class="btn" style="background:rgba(0,0,0,0.05);color:#555;padding:10px 15px;box-shadow:none" onclick="editPersona(${idx})">✏️</button>
                     <button class="btn danger" style="padding:10px 15px;box-shadow:none" onclick="deletePersona(${idx})">🗑️</button>
                 </div>
             `;
@@ -402,266 +396,118 @@
         });
     }
     function usePersona(idx) { activePersonaIdx = idx; saveConfigData(); renderPersonas(); showToast("✅ AI 人设已切换"); }
-    function addNewPersona() {
-        const name = prompt("给新人设起个名字（如：中二少年）：");
-        if(!name) return;
-        personas.push({ name: name, content: "请在此处填写具体的设定提示词..." });
-        activePersonaIdx = personas.length - 1;
-        saveConfigData(); renderPersonas(); editPersona(activePersonaIdx);
-    }
-    function editPersona(idx) {
-        const p = personas[idx];
-        const newContent = prompt(`正在编辑【${p.name}】的设定：\n(如需换行请尽量精简)`, p.content);
-        if(newContent !== null && newContent.trim() !== '') { p.content = newContent; saveConfigData(); renderPersonas(); }
-    }
-    function deletePersona(idx) {
-        if(personas.length <= 1) return showToast("⚠️ 系统至少需要保留一个人设底座哦！");
-        if(confirm(`确定要删除人设【${personas[idx].name}】吗？`)) {
-            personas.splice(idx, 1);
-            if(activePersonaIdx >= personas.length) activePersonaIdx = personas.length - 1;
-            saveConfigData(); renderPersonas();
-        }
-    }
+    function addNewPersona() { const name = prompt("给新人设起个名字（如：中二少年）："); if(!name) return; personas.push({ name: name, content: "请在此处填写具体的设定提示词..." }); activePersonaIdx = personas.length - 1; saveConfigData(); renderPersonas(); editPersona(activePersonaIdx); }
+    function editPersona(idx) { const p = personas[idx]; const newContent = prompt(`正在编辑【${p.name}】的设定：\n(如需换行请尽量精简)`, p.content); if(newContent !== null && newContent.trim() !== '') { p.content = newContent; saveConfigData(); renderPersonas(); } }
+    function deletePersona(idx) { if(personas.length <= 1) return showToast("⚠️ 系统至少需要保留一个人设底座哦！"); if(confirm(`确定要删除人设【${personas[idx].name}】吗？`)) { personas.splice(idx, 1); if(activePersonaIdx >= personas.length) activePersonaIdx = personas.length - 1; saveConfigData(); renderPersonas(); } }
+    function saveConfigData() { localStorage.setItem('sr_api_presets', JSON.stringify(apiPresets)); localStorage.setItem('sr_active_preset_idx', activePresetIdx); localStorage.setItem('sr_personas', JSON.stringify(personas)); localStorage.setItem('sr_active_persona_idx', activePersonaIdx); }
 
-    // Save All Meta Configs
-    function saveConfigData() {
-        localStorage.setItem('sr_api_presets', JSON.stringify(apiPresets));
-        localStorage.setItem('sr_active_preset_idx', activePresetIdx);
-        localStorage.setItem('sr_personas', JSON.stringify(personas));
-        localStorage.setItem('sr_active_persona_idx', activePersonaIdx);
-    }
-
-    // --- Core Database ---
     window.openSidebarById = async function(id) { const n=await Store.get('notes',id); if(n) openSidebar(n); };
-    function switchDB() {
-        const newName = document.getElementById('db-name-input').value.trim();
-        if(!newName || newName === DB_NAME) return;
-        if(confirm(`切换到仓库 "${newName}" 吗？页面将刷新。`)) { localStorage.setItem('sr_dbname', newName); location.reload(); }
-    }
-    function initDB(){return new Promise(r=>{
-        const q=indexedDB.open(DB_NAME,2); 
-        q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}};
-        q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();};
-    })}
+    function switchDB() { const newName = document.getElementById('db-name-input').value.trim(); if(!newName || newName === DB_NAME) return; if(confirm(`切换到仓库 "${newName}" 吗？页面将刷新。`)) { localStorage.setItem('sr_dbname', newName); location.reload(); } }
+    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();}; })}
     const Store={put:(t,d)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).put(d);x.oncomplete=r}),getAll:t=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).getAll().onsuccess=e=>r(e.target.result)}),get:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).get(id).onsuccess=e=>r(e.target.result)}),del:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).delete(id);x.oncomplete=r})};
 
-    // --- Shelf & Reader ---
     async function refreshShelf(){
-        const bs=await Store.getAll('books');
-        const l=document.getElementById('shelf-list'); l.innerHTML='';
+        const bs=await Store.getAll('books'); const l=document.getElementById('shelf-list'); l.innerHTML='';
         document.getElementById('empty-tip').style.display = bs.length ? 'none' : 'block';
-        const filter = document.getElementById('timeline-filter'); const currentVal = filter.value;
-        filter.innerHTML = '<option value="all">📂 全部笔记归档</option>';
+        const filter = document.getElementById('timeline-filter'); const currentVal = filter.value; filter.innerHTML = '<option value="all">📂 全部笔记归档</option>';
         bs.forEach(b => {
             const op = document.createElement('option'); op.value = b.id; op.innerText = `📖 ${b.title}`; filter.appendChild(op);
             const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;
-            d.innerHTML=`<div style="font-weight:bold;overflow:hidden;max-height:60px;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:8px;opacity:0.9;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-8px;right:-8px;background:#ff7675;color:white;width:24px;height:24px;border-radius:50%;line-height:22px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 8px rgba(255,118,117,0.5)">×</div>`;
+            d.innerHTML=`<div style="font-weight:bold;overflow:hidden;max-height:60px;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:8px;opacity:0.9;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
             d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)}; l.appendChild(d);
         });
         if(currentVal && Array.from(filter.options).some(o=>o.value==currentVal)) filter.value = currentVal;
     }
     
     async function openReader(b){
-        currentBook=b; if(!currentBook.memories) currentBook.memories=[];
-        document.getElementById('reader-overlay').classList.add('active');
-        document.getElementById('book-title-header').innerText=b.title;
-        
-        // 🤖 智能目录
-        let tempContent = b.content; let tocHTML = ''; let chapIdx = 0;
-        const chapRegex = /<p>\s*(第[\u4e00-\u9fa50-9零一二三四五六七八九十百千万]+[章回节卷部].{0,30}|Chapter\s*\d+.*?|引子|番外.*?|前言|序言|尾声|后记)<\/p>/g;
-        tempContent = tempContent.replace(chapRegex, (match, title) => {
-            chapIdx++; const curId = `toc-chap-${chapIdx}`;
-            tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`;
-            return `<p id="${curId}" style="font-weight:bold;color:var(--accent);font-size:1.3em;margin-top:1.5em;padding-bottom:10px;border-bottom:2px dashed rgba(211,84,0,0.2);">${title}</p>`;
-        });
+        currentBook=b; if(!currentBook.memories) currentBook.memories=[]; document.getElementById('reader-overlay').classList.add('active'); document.getElementById('book-title-header').innerText=b.title;
+        let tempContent = b.content; let tocHTML = ''; let chapIdx = 0; const chapRegex = /<p>\s*(第[\u4e00-\u9fa50-9零一二三四五六七八九十百千万]+[章回节卷部].{0,30}|Chapter\s*\d+.*?|引子|番外.*?|前言|序言|尾声|后记)<\/p>/g;
+        tempContent = tempContent.replace(chapRegex, (match, title) => { chapIdx++; const curId = `toc-chap-${chapIdx}`; tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`; return `<p id="${curId}" style="font-weight:bold;color:#444;font-size:1.3em;margin-top:1.5em;padding-bottom:10px;border-bottom:2px dashed rgba(0,0,0,0.05);">${title}</p>`; });
         if(chapIdx === 0) tocHTML = '<div style="padding:40px 20px;text-align:center;color:#a4b0be;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇、未分章，或是排版特殊。</div>';
-        document.getElementById('toc-list').innerHTML = tocHTML;
-
-        document.getElementById('reader-content').innerHTML = tempContent;
-        setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
+        document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
     }
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
     function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
-    // Restore Highlights
     function restoreHighlights(notes) {
-        if(!notes || !notes.length) return;
-        const root = document.getElementById('reader-content'); const content = root.innerHTML;
-        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-        const textNodes =[]; let node; while(node = walker.nextNode()) textNodes.push(node);
-        notes.forEach(note => {
-            if(content.includes(`window.openSidebarById('${note.id}')`)) return;
-            for(let tn of textNodes) {
-                const idx = tn.nodeValue.indexOf(note.quote);
-                if(idx !== -1) {
-                    try {
-                        const range = document.createRange(); range.setStart(tn, idx); range.setEnd(tn, idx + note.quote.length);
-                        const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = note.quote;
-                        wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); };
-                        range.deleteContents(); range.insertNode(wrapper); break;
-                    } catch(e) {}
-                }
-            }
-        });
+        if(!notes || !notes.length) return; const root = document.getElementById('reader-content'); const content = root.innerHTML; const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false); const textNodes =[]; let node; while(node = walker.nextNode()) textNodes.push(node);
+        notes.forEach(note => { if(content.includes(`window.openSidebarById('${note.id}')`)) return; for(let tn of textNodes) { const idx = tn.nodeValue.indexOf(note.quote); if(idx !== -1) { try { const range = document.createRange(); range.setStart(tn, idx); range.setEnd(tn, idx + note.quote.length); const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = note.quote; wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); }; range.deleteContents(); range.insertNode(wrapper); break; } catch(e) {} } } });
     }
 
-    // --- Selection ---
-    document.addEventListener('selectionchange', () => {
-        const s = window.getSelection(); const d = document.getElementById('floating-dock');
-        if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible');
-        else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300);
-    });
-
-    const handleCreate = (e, mode) => {
-        e.preventDefault(); e.stopPropagation();
-        const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字");
-        const range = s.getRangeAt(0).cloneRange(); const text = s.toString();
-        if(!text.trim()) return showToast("⚠️ 选区内容为空");
-        createNoteWithSelection(range, text, mode);
-    };
+    document.addEventListener('selectionchange', () => { const s = window.getSelection(); const d = document.getElementById('floating-dock'); if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible'); else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300); });
+    const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); createNoteWithSelection(range, text, mode); };
     ['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
 
     async function createNoteWithSelection(range, text, mode) {
-        const allNotes = await Store.getAll('notes');
-        if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) {
-             window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return;
-        }
+        const allNotes = await Store.getAll('notes'); if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) { window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; }
         document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
-        try {
-            const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = nid; wrapper.innerText = text;
-            wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); };
-            range.deleteContents(); range.insertNode(wrapper);
-        } catch(e) {
-            const anchor = document.createElement('span'); anchor.className = 'ai-anchor'; anchor.innerText = '📝'; anchor.dataset.nid = nid;
-            anchor.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.collapse(true); range.insertNode(anchor);
-        }
-        window.getSelection().removeAllRanges();
-        const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." };
-        await Store.put('notes', note);
-        if(mode=='ai') triggerAI(note); else openSidebar(note);
+        try { const wrapper = document.createElement('mark'); wrapper.className = 'ai-mark'; wrapper.dataset.nid = nid; wrapper.innerText = text; wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.deleteContents(); range.insertNode(wrapper); } 
+        catch(e) { const anchor = document.createElement('span'); anchor.className = 'ai-anchor'; anchor.innerText = '📝'; anchor.dataset.nid = nid; anchor.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; range.collapse(true); range.insertNode(anchor); }
+        window.getSelection().removeAllRanges(); const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; await Store.put('notes', note); if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
 
-    // --- Chat & Timeline ---
     function openSidebar(n){activeNoteId=n.id;document.getElementById('sidebar').classList.add('active');document.getElementById('chat-quote').innerText=n.quote;renderChat(n.messages)}
     function renderChat(ms){
-        const l=document.getElementById('chat-list'); l.innerHTML='';
-        if(ms.length==0) l.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:40px;font-size:14px">✨ 对话空空如也，快跟AI聊聊吧</div>';
+        const l=document.getElementById('chat-list'); l.innerHTML=''; if(ms.length==0) l.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:40px;font-size:14px">✨ 对话空空如也，快跟AI聊聊吧</div>';
         ms.forEach((m, idx)=>{
-            const isAI = m.role=='ai';
-            const actionsHTML = `
-                <div class="msg-actions">
-                    ${!isAI ? `<span class="action-link" onclick="editMsg(${idx})">✏️ 编辑</span>` : ''}
-                    ${isAI && idx===ms.length-1 ? `<span class="action-link" onclick="retryAI()">🔄 重写</span>` : ''}
-                    <span class="action-link danger" onclick="deleteMsg(${idx})">🗑️ 删除</span>
-                    <span class="action-link" onclick="safeCopy('${m.content.replace(/'/g,"\\'").replace(/\n/g," ")}')">📄 复制</span>
-                </div>`;
-            const d=document.createElement('div'); d.className=`msg-container ${m.role}`;
-            d.innerHTML = `<div class="msg-bubble">${formatText(m.content)}</div>${actionsHTML}`;
-            l.appendChild(d);
-        });
-        l.scrollTop=l.scrollHeight;
+            const isAI = m.role=='ai'; const actionsHTML = `<div class="msg-actions">${!isAI ? `<span class="action-link" onclick="editMsg(${idx})">✏️ 编辑</span>` : ''} ${isAI && idx===ms.length-1 ? `<span class="action-link" onclick="retryAI()">🔄 重写</span>` : ''} <span class="action-link danger" onclick="deleteMsg(${idx})">🗑️ 删除</span> <span class="action-link" onclick="safeCopy('${m.content.replace(/'/g,"\\'").replace(/\n/g," ")}')">📄 复制</span></div>`;
+            const d=document.createElement('div'); d.className=`msg-container ${m.role}`; d.innerHTML = `<div class="msg-bubble">${formatText(m.content)}</div>${actionsHTML}`; l.appendChild(d);
+        }); l.scrollTop=l.scrollHeight;
     }
 
     async function refreshTimeline(){
-        const ns=await Store.getAll('notes'); const bs=await Store.getAll('books');
-        const c=document.getElementById('timeline-content'); c.innerHTML='';
-        const filterId = document.getElementById('timeline-filter').value;
+        const ns=await Store.getAll('notes'); const bs=await Store.getAll('books'); const c=document.getElementById('timeline-content'); c.innerHTML=''; const filterId = document.getElementById('timeline-filter').value;
         if(ns.length==0){c.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:50px;font-size:15px">暂无任何笔记记录</div>';return}
-        
-        const gs={};
-        ns.forEach(n=>{ if(filterId !== 'all' && n.bookId !== filterId) return; if(!gs[n.bookId]) gs[n.bookId]=[]; gs[n.bookId].push(n); });
+        const gs={}; ns.forEach(n=>{ if(filterId !== 'all' && n.bookId !== filterId) return; if(!gs[n.bookId]) gs[n.bookId]=[]; gs[n.bookId].push(n); });
         if(Object.keys(gs).length === 0) { c.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:50px">该书下暂无笔记</div>'; return; }
-
         Object.keys(gs).forEach(bid=>{
-            const b=bs.find(x=>x.id==bid);
-            const g=document.createElement('div'); g.className='tl-book-group';
-            g.innerHTML=`<div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')"><span class="tl-title">📖 ${b?b.title:'未知'} <small style="color:#a4b0be;font-weight:normal;background:#f0f0f0;padding:2px 8px;border-radius:10px">${gs[bid].length} 条</small></span><span class="tl-arrow">▼</span></div><div class="tl-notes-container"></div>`;
+            const b=bs.find(x=>x.id==bid); const g=document.createElement('div'); g.className='tl-book-group';
+            g.innerHTML=`<div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')"><span class="tl-title">📖 ${b?b.title:'未知'} <small style="color:#888;font-weight:normal;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:10px">${gs[bid].length} 条</small></span><span class="tl-arrow">▼</span></div><div class="tl-notes-container"></div>`;
             const ct=g.querySelector('.tl-notes-container');
             gs[bid].sort((a,b)=>b.time-a.time).forEach(n=>{
-                const d=document.createElement('div'); d.className='tl-note-item';
-                d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px">"${n.quote}"</div><div style="font-size:13px;color:#888;line-height:1.5">${(n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50)}...</div>`;
-                initTimelineItem(d, n.id);
-                d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),400); } };
-                ct.appendChild(d);
-            });
-            c.appendChild(g);
+                const d=document.createElement('div'); d.className='tl-note-item'; d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px">"${n.quote}"</div><div style="font-size:13px;color:#888;line-height:1.5">${(n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50)}...</div>`;
+                initTimelineItem(d, n.id); d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),400); } }; ct.appendChild(d);
+            }); c.appendChild(g);
         });
     }
 
-    // --- Actions ---
     let longPressTimer, isLongPress, targetNoteId;
     function initTimelineItem(el, nid) {
-        const start = () => { isLongPress=false; longPressTimer=setTimeout(()=>{isLongPress=true;el.style.background='#ffebeb';if(navigator.vibrate)navigator.vibrate(50);showActionSheet(nid)},600); };
+        const start = () => { isLongPress=false; longPressTimer=setTimeout(()=>{isLongPress=true;el.style.background='rgba(255,118,117,0.1)';if(navigator.vibrate)navigator.vibrate(50);showActionSheet(nid)},600); };
         const end = () => { clearTimeout(longPressTimer); setTimeout(()=>el.style.background='',300); };
         el.addEventListener('touchstart', start); el.addEventListener('touchend', end); el.addEventListener('mousedown', start); el.addEventListener('mouseup', end);
     }
-    function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); 
-        document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; 
-    }
+    function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; }
     function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
 
-    // --- AI Logic ---
     async function triggerAI(n) {
         if(!GS.key) return showToast("⚠️ 请先在设置中配置 API Key");
         openSidebar(n); const l=document.getElementById('chat-list');
-        const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px;background:#f0f0f0;border-radius:10px;animation:pulse 1.5s infinite"></div></div><style>@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}</style>`;
-        l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
-
-        const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n');
-        const systemPrompt = `${GS.persona}\n书本记忆：${memoryText}\n背景：${currentBook.context}`;
-        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ];
-        if(n.messages.length===0) msgs.push({role:'user', content:`我读到了这段：\n"${n.quote}"\n\n你怎么看？`});
-
+        const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px;background:rgba(0,0,0,0.05);border-radius:10px;animation:pulse 1.5s infinite"></div></div><style>@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}</style>`; l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
+        const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); const systemPrompt = `${GS.persona}\n书本记忆：${memoryText}\n背景：${currentBook.context}`;
+        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; if(n.messages.length===0) msgs.push({role:'user', content:`我读到了这段：\n"${n.quote}"\n\n你怎么看？`});
         let fullText = "";
-        try {
-            await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; });
-            loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`;
-            n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n);
-        } catch(e) { loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c">网络错误或配置有误: ${e.message}</div>`; }
+        try { await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; }); loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`; n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n); } 
+        catch(e) { loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c">网络错误或配置有误: ${e.message}</div>`; }
     }
     async function callAPIStream(messages, onChunk) {
         const response = await fetch(`${GS.url}/chat/completions`, {method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages: messages, stream: true })});
         if(!response.ok) throw new Error('API 返回异常状态码');
         const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
-        while (true) {
-            const {done, value} = await reader.read(); if (done) break;
-            buffer += decoder.decode(value, {stream: true}); const lines = buffer.split('\n'); buffer = lines.pop();
-            for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const data = line.slice(6).trim(); if (data === '[DONE]') continue;
-                try { const json = JSON.parse(data); const content = json.choices[0]?.delta?.content; if (content) onChunk(content); } catch(e) {}
-            }
-        }
+        while (true) { const {done, value} = await reader.read(); if (done) break; buffer += decoder.decode(value, {stream: true}); const lines = buffer.split('\n'); buffer = lines.pop(); for (const line of lines) { if (!line.startsWith('data: ')) continue; const data = line.slice(6).trim(); if (data === '[DONE]') continue; try { const json = JSON.parse(data); const content = json.choices[0]?.delta?.content; if (content) onChunk(content); } catch(e) {} } }
     }
 
     async function summarizeThread() {
-        const n = await Store.get('notes', activeNoteId);
-        if(!n.messages.length) return showToast("⚠️ 无对话可提炼");
-        showToast("🧠 正在提炼核心记忆...");
-        try {
-            const history = n.messages.map(m => `${m.role=='user'?'读者':'AI'}: ${m.content}`).join('\n');
-            const res = await fetch(`${GS.url}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages:[ { role: 'system', content: '【最高指令】对前文内容进行全面梳理总结，字数400以内。无需聊天，直接输出干货结果。' }, { role: 'user', content: `对话内容：\n${history}\n\n请总结：` } ] }) });
-            const data = await res.json(); const summary = data.choices[0].message.content.trim();
-            if(!currentBook.memories) currentBook.memories=[];
-            currentBook.memories.push(summary); await Store.put('books', currentBook);
-            n.messages.push({role:'ai', content:`📝 **已将提炼内容存入书籍记忆库**：\n${summary}`, time:Date.now()});
-            await Store.put('notes', n); renderChat(n.messages); showToast("✅ 记忆已永久保存");
-        } catch(e){ alert(e.message); }
+        const n = await Store.get('notes', activeNoteId); if(!n.messages.length) return showToast("⚠️ 无对话可提炼"); showToast("🧠 正在提炼核心记忆...");
+        try { const history = n.messages.map(m => `${m.role=='user'?'读者':'AI'}: ${m.content}`).join('\n'); const res = await fetch(`${GS.url}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages:[ { role: 'system', content: '【最高指令】对前文内容进行全面梳理总结，字数400以内。无需聊天，直接输出干货结果。' }, { role: 'user', content: `对话内容：\n${history}\n\n请总结：` } ] }) }); const data = await res.json(); const summary = data.choices[0].message.content.trim(); if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push(summary); await Store.put('books', currentBook); n.messages.push({role:'ai', content:`📝 **已将提炼内容存入书籍记忆库**：\n${summary}`, time:Date.now()}); await Store.put('notes', n); renderChat(n.messages); showToast("✅ 记忆已永久保存"); } catch(e){ alert(e.message); }
     }
 
     async function autoAnalyze(){ 
-        if(!currentBook) return; showToast("🧠 正在调用大模型分析全书..."); 
-        const cleanTitle = currentBook.title.replace(/\.(txt|pdf|epub)$/i, '').replace(/[\[\(].*?[\]\)]/g, '').trim();
-        const t = document.getElementById('reader-content').innerText.slice(0,2500); 
-        try {
-            const res = await fetch(`${GS.url}/chat/completions`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`}, body:JSON.stringify({ model:GS.model, messages:[ { role: 'system', content: '你是文学评论家。优先从知识库检索该书。如果不知道，根据开头推断。' }, { role:'user', content:`分析书籍《${cleanTitle}》。\n直接介绍核心剧情、人物关系和看点（300字）。\n如不知道，根据开头推断：\n${t}` } ] }) }).then(r=>r.json()); 
-            document.getElementById('current-book-context').value = res.choices[0].message.content; 
-            saveBookConfig(); showToast("✅ 自动分析完成！"); 
-        } catch(e){ alert("请求失败，请检查 API"); }
+        if(!currentBook) return; showToast("🧠 正在调用大模型分析全书..."); const cleanTitle = currentBook.title.replace(/\.(txt|pdf|epub)$/i, '').replace(/[\[\(].*?[\]\)]/g, '').trim(); const t = document.getElementById('reader-content').innerText.slice(0,2500); 
+        try { const res = await fetch(`${GS.url}/chat/completions`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`}, body:JSON.stringify({ model:GS.model, messages:[ { role: 'system', content: '你是文学评论家。优先从知识库检索该书。如果不知道，根据开头推断。' }, { role:'user', content:`分析书籍《${cleanTitle}》。\n直接介绍核心剧情、人物关系和看点（300字）。\n如不知道，根据开头推断：\n${t}` } ] }) }).then(r=>r.json()); document.getElementById('current-book-context').value = res.choices[0].message.content; saveBookConfig(); showToast("✅ 自动分析完成！"); } catch(e){ alert("请求失败，请检查 API"); }
     }
 
-    // Utils
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     function safeCopy(text) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast("✅ 已复制"); } catch (e) {} document.body.removeChild(ta); }
@@ -672,12 +518,11 @@
     
     function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
     function saveBookConfig(){currentBook.context=document.getElementById('current-book-context').value;Store.put('books',currentBook);}
-    function renderMemories(){ const list = document.getElementById('memory-list'); list.innerHTML = ''; (currentBook.memories ||[]).forEach((m, i) => { const div = document.createElement('div'); div.innerHTML = `<div style="background:#fff8e1;border-left:4px solid #f1c40f;padding:15px;margin-bottom:12px;border-radius:0 12px 12px 0;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.02)"><div contenteditable="true" onblur="updateMemory(${i}, this.innerText)" style="outline:none;line-height:1.5">${m.replace(/</g,'&lt;')}</div><div style="position:absolute;top:5px;right:5px;padding:5px 10px;color:#ff7675;cursor:pointer;font-size:18px" onclick="deleteMemory(${i})">×</div></div>`; list.appendChild(div.firstChild); }); }
+    function renderMemories(){ const list = document.getElementById('memory-list'); list.innerHTML = ''; (currentBook.memories ||[]).forEach((m, i) => { const div = document.createElement('div'); div.innerHTML = `<div style="background:rgba(255,255,255,0.6);border-left:4px solid #f1c40f;padding:15px;margin-bottom:12px;border-radius:0 12px 12px 0;position:relative;box-shadow:0 2px 10px rgba(0,0,0,0.02)"><div contenteditable="true" onblur="updateMemory(${i}, this.innerText)" style="outline:none;line-height:1.5">${m.replace(/</g,'&lt;')}</div><div style="position:absolute;top:5px;right:5px;padding:5px 10px;color:#ff7675;cursor:pointer;font-size:18px" onclick="deleteMemory(${i})">×</div></div>`; list.appendChild(div.firstChild); }); }
     async function updateMemory(idx, text){ currentBook.memories[idx] = text; await Store.put('books', currentBook); }
     async function deleteMemory(idx){ if(confirm("删除这条记忆?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
     async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("点此输入新记忆..."); await Store.put('books', currentBook); renderMemories(); }
     
-    // File
     document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=formatTxt(await parseEpub(f));await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
@@ -686,7 +531,6 @@
     function formatTxt(t){return t.split('\n').filter(s=>s.trim()).map(s=>`<p>${s}</p>`).join('')}
     function formatPdf(t){return t.split('\n').map(s=>s.trim()?`<p>${s}</p>`:'<br>').join('')}
     
-    // System UI Events
     function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(refreshShelf)}
     function switchTab(t){
         document.querySelectorAll('.tab-item').forEach(e=>e.classList.remove('active'));
