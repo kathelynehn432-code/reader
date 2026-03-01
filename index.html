@@ -1,10 +1,12 @@
 
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V36 (绝美且无Bug版)</title>
+    <title>SoulReader V37 (终极稳定版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -60,7 +62,12 @@
         #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; }
         #reader-overlay.active { display: flex; }
         #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
+        
         #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; }
+        
+        /* 💡 新增的排版优化 */
+        #reader-content p { text-indent: 2em; margin: 0 0 1.2em 0; }
+        #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: #444; font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(0,0,0,0.05); }
 
         #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
         #toc-sidebar.active { transform: translateX(0); }
@@ -88,7 +95,6 @@
         .dock-btn:active { background: rgba(255,255,255,0.1); }
 
         mark.ai-mark { background: var(--mark-bg); color: inherit; cursor: pointer; border-bottom: 2px solid #e67e22; padding-bottom: 0; margin: 0; border-radius: 4px; padding: 0 2px; }
-        .ai-anchor { display: inline-flex; width: 22px; height: 22px; background: var(--accent); color: white; border-radius: 50%; font-size: 10px; justify-content: center; align-items: center; margin-right: 4px; vertical-align: middle; cursor: pointer; box-shadow: 0 2px 5px rgba(211,84,0,0.3); }
         
         #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); color: white; padding: 16px 30px; border-radius: 30px; font-size: 15px; z-index: 9999; display: none; text-align:center; max-width: 80%; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
@@ -122,12 +128,6 @@
     <button class="as-btn danger" id="as-del-btn">🗑️ 删除这条笔记</button>
     <div style="height:8px;background:#f9f9f9"></div>
     <button class="as-btn" style="border-radius:0" onclick="closeActionSheet()">取消</button>
-</div>
-
-<div id="loader" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);z-index:6000;justify-content:center;align-items:center;flex-direction:column">
-    <div style="font-size:35px;animation:spin 1s linear infinite">🧠</div>
-    <div style="margin:20px;color:#d35400;font-weight:bold" id="loader-text">AI 正在思考...</div>
-    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
 <div id="tab-bar">
@@ -402,7 +402,7 @@
     async function openReader(b){
         currentBook=b; if(!currentBook.memories) currentBook.memories=[]; document.getElementById('reader-overlay').classList.add('active'); document.getElementById('book-title-header').innerText=b.title;
         let tempContent = b.content; let tocHTML = ''; let chapIdx = 0; const chapRegex = /<p>\s*(第[\u4e00-\u9fa50-9零一二三四五六七八九十百千万]+[章回节卷部].{0,30}|Chapter\s*\d+.*?|引子|番外.*?|前言|序言|尾声|后记)<\/p>/g;
-        tempContent = tempContent.replace(chapRegex, (match, title) => { chapIdx++; const curId = `toc-chap-${chapIdx}`; tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`; return `<p id="${curId}" style="font-weight:bold;color:#444;font-size:1.3em;margin-top:1.5em;padding-bottom:10px;border-bottom:2px dashed rgba(0,0,0,0.05);">${title}</p>`; });
+        tempContent = tempContent.replace(chapRegex, (match, title) => { chapIdx++; const curId = `toc-chap-${chapIdx}`; tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`; return `<p id="${curId}" class="chap-title">${title}</p>`; });
         if(chapIdx === 0) tocHTML = '<div style="padding:40px 20px;text-align:center;color:#a4b0be;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇、未分章，或是排版特殊。</div>';
         document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
@@ -410,54 +410,135 @@
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
     function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
-    // 🔥 完美重写的高亮恢复系统（支持换行、跨段落）
+    // 🔥 全新重写的【全书字符映射算法】高亮恢复系统：无视乱七八糟的段落、换行、已有高亮打断！绝不消失！
     function restoreHighlights(notes) {
         if(!notes || !notes.length) return; 
         const root = document.getElementById('reader-content'); 
+        
+        let allText = "";
+        let charMap =[]; 
+        let walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        
+        // 1. 抽提当前所有的纯文本并映射 DOM 节点（跳过已标记部分，防止错误嵌套）
+        while(n = walker.nextNode()) {
+            if (n.parentNode && n.parentNode.nodeName === 'MARK') continue; 
+            let val = n.nodeValue;
+            for(let j=0; j<val.length; j++) {
+                if (val[j].trim() !== '') { 
+                    allText += val[j];
+                    charMap.push({ node: n, offset: j });
+                }
+            }
+        }
+        
+        let allTextStr = allText;
+        let wrapsToApply =[];
+        
+        // 2. 疯狂匹配所有的金句段落
         notes.forEach(note => { 
-            if(root.innerHTML.includes(`data-nid="${note.id}"`)) return; 
+            if(root.querySelector(`mark[data-nid="${note.id}"]`)) return; 
             
-            // 将长文本智能拆分成短句，完美跨过段落符号
             const chunks = note.quote.split(/\n+/).map(s => s.trim()).filter(s => s.length > 0);
             
-            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false); 
-            const textNodes =[]; let node; 
-            while(node = walker.nextNode()) textNodes.push(node);
-            
-            for(let chunk of chunks) {
-                for(let tn of textNodes) {
-                    const idx = tn.nodeValue.indexOf(chunk);
-                    if(idx !== -1) {
-                        try { 
-                            const range = document.createRange(); 
-                            range.setStart(tn, idx); range.setEnd(tn, idx + chunk.length); 
-                            const wrapper = document.createElement('mark'); 
-                            wrapper.className = 'ai-mark'; wrapper.dataset.nid = note.id; wrapper.textContent = chunk; 
-                            wrapper.onclick = (e) => { e.stopPropagation(); window.openSidebarById(note.id); }; 
-                            range.deleteContents(); range.insertNode(wrapper); 
-                        } catch(e) {}
-                        break; // 找到这段话后停止，避免把书里所有一样的字全画上线
+            for (let chunk of chunks) {
+                let chunkChars = chunk.replace(/\s+/g, '');
+                if(!chunkChars) continue;
+                
+                let matchIdx = allTextStr.indexOf(chunkChars);
+                if (matchIdx !== -1) {
+                    let nodeRanges = new Map();
+                    for(let k = matchIdx; k < matchIdx + chunkChars.length; k++) {
+                        let info = charMap[k];
+                        if(!info) continue;
+                        if (!nodeRanges.has(info.node)) {
+                            nodeRanges.set(info.node, { start: info.offset, end: info.offset });
+                        } else {
+                            nodeRanges.get(info.node).end = info.offset;
+                        }
                     }
+                    
+                    for (let [node, bounds] of nodeRanges.entries()) {
+                        wrapsToApply.push({ node: node, start: bounds.start, end: bounds.end, nid: note.id });
+                    }
+                    
+                    // 用 \0 把匹配过的地方遮起来，避免神仙冲突
+                    let mask = '\0'.repeat(chunkChars.length);
+                    allTextStr = allTextStr.substring(0, matchIdx) + mask + allTextStr.substring(matchIdx + chunkChars.length);
                 }
             }
         });
+        
+        // 3. 将待处理包裹任务按节点分组
+        let nodeGroups = new Map();
+        for (let w of wrapsToApply) {
+            if (!nodeGroups.has(w.node)) nodeGroups.set(w.node,[]);
+            nodeGroups.get(w.node).push(w);
+        }
+        
+        // 4. 【核心黑魔法】针对同一个文本节点的切分，一定要“倒序”下手！否则前面的包裹会毁掉后面的 offset
+        for (let [node, wraps] of nodeGroups.entries()) {
+            wraps.sort((a, b) => b.start - a.start);
+            for (let w of wraps) {
+                try {
+                    let r = document.createRange();
+                    r.setStart(node, w.start);
+                    r.setEnd(node, w.end + 1);
+                    let mark = document.createElement('mark');
+                    mark.className = 'ai-mark';
+                    mark.dataset.nid = w.nid;
+                    mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(w.nid); };
+                    r.surroundContents(mark);
+                } catch(e) {}
+            }
+        }
+    }
+    
+    // 🔥 【实时画线系统】稳准狠，锁定当前选区
+    function safeHighlightRange(range, nid) {
+        const nodes =[];
+        let walker = document.createTreeWalker(document.getElementById('reader-content'), NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        while (n = walker.nextNode()) if (range.intersectsNode(n)) nodes.push(n);
+        
+        let validNodes = nodes.filter(n => n.nodeValue.trim().length > 0);
+        for (let i = validNodes.length - 1; i >= 0; i--) {
+            let node = validNodes[i];
+            let isStart = node === range.startContainer;
+            let isEnd = node === range.endContainer;
+            
+            let startIdx = isStart ? range.startOffset : 0;
+            let endIdx = isEnd ? range.endOffset : node.nodeValue.length;
+            
+            if (startIdx >= endIdx) continue;
+            
+            try {
+                let r = document.createRange();
+                r.setStart(node, startIdx);
+                r.setEnd(node, endIdx);
+                
+                let mark = document.createElement('mark');
+                mark.className = 'ai-mark';
+                mark.dataset.nid = nid;
+                mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); };
+                r.surroundContents(mark);
+            } catch(e) {}
+        }
     }
 
     document.addEventListener('selectionchange', () => { const s = window.getSelection(); const d = document.getElementById('floating-dock'); if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible'); else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300); });
     const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); createNoteWithSelection(range, text, mode); };['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
 
-    // 🔥 重写的创建划线系统（不再引发浏览器冲突，稳如泰山）
     async function createNoteWithSelection(range, text, mode) {
         const allNotes = await Store.getAll('notes'); if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) { window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; }
         document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
         
-        // 核心修复：直接清除浏览器原生的丑陋选区，改用我们的智能高亮系统来画线！
-        window.getSelection().removeAllRanges(); 
         const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; 
         await Store.put('notes', note); 
         
-        // 瞬间画上稳固的下划线
-        restoreHighlights([note]);
+        // 精准原位包裹，避免跳动，如果失败再调用智能补救
+        try { safeHighlightRange(range, nid); } catch(e) { restoreHighlights([note]); }
+        window.getSelection().removeAllRanges(); 
         
         if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
@@ -496,7 +577,6 @@
     function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; }
     function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
 
-    // 🧠 强制洗脑法：把原文绝对地烙印在 AI 的记忆深处
     async function triggerAI(n) {
         if(!GS.key) return showToast("⚠️ 请先在设置中配置 API Key");
         openSidebar(n); const l=document.getElementById('chat-list');
@@ -504,7 +584,6 @@
         
         const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); 
         
-        // ✨ 重磅补丁：在这里直接强制喂给 AI 划线原文！
         const systemPrompt = `${GS.persona}\n\n【最高指令：当前用户正在讨论的原文片段如下，你必须结合这段原文进行回复！】\n"${n.quote}"\n\n【当前全书背景与长期记忆】\n${currentBook.context}\n${memoryText}`;
         
         const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; 
@@ -547,13 +626,16 @@
     async function deleteMemory(idx){ if(confirm("删除这条记忆?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
     async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("点此输入新记忆..."); await Store.put('books', currentBook); renderMemories(); }
     
-    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=formatTxt(await parseEpub(f));await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
+    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
-    async function parsePdf(f){const p=await pdfjsLib.getDocument({data:await readArr(f)}).promise;let t='';for(let i=1;i<=p.numPages;i++)t+=(await(await p.getPage(i)).getTextContent()).items.map(s=>s.str).join(' ')+'\n\n';return formatPdf(t)}
-    async function parseEpub(f){const z=await JSZip.loadAsync(await readArr(f));const p=new DOMParser();let t='';for(let k in z.files)if(k.match(/\.x?html$/))t+=p.parseFromString(await z.file(k).async('string'),'text/html').body.innerText+'\n\n';return t}
-    function formatTxt(t){return t.split('\n').filter(s=>s.trim()).map(s=>`<p>${s}</p>`).join('')}
-    function formatPdf(t){return t.split('\n').map(s=>s.trim()?`<p>${s}</p>`:'<br>').join('')}
+    
+    async function parsePdf(f){const p=await pdfjsLib.getDocument({data:await readArr(f)}).promise;let t='';for(let i=1;i<=p.numPages;i++)t+=(await(await p.getPage(i)).getTextContent()).items.map(s=>s.str).join(' ')+'\n\n';return t}
+    async function parseEpub(f){const z=await JSZip.loadAsync(await readArr(f));const p=new DOMParser();let t='';const files=Object.keys(z.files).filter(k=>k.match(/\.x?html$/)).sort();for(let k of files){const doc=p.parseFromString(await z.file(k).async('string'),'text/html');const els=doc.querySelectorAll('p, div');if(els.length>0)els.forEach(el=>{const txt=el.innerText.trim();if(txt)t+=txt+'\n';});else t+=doc.body.innerText+'\n';}return formatTxt(t);}
+    
+    /* 💡 排版引擎强化区 */
+    function formatTxt(t){ return t.split(/\r?\n/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
+    function formatPdf(t){ return t.replace(/([^\n。？！.!?])\n([^\n])/g, '$1$2').split(/\n+/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     
     function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(refreshShelf)}
     function switchTab(t){
