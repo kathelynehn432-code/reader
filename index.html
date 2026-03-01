@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V34 (完美双保险版)</title>
+    <title>SoulReader V35 (绝杀Bug版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -116,7 +116,6 @@
 
 <div id="toast"></div>
 
-<!-- Action Sheet -->
 <div id="as-mask" onclick="closeActionSheet()"></div>
 <div id="action-sheet">
     <div style="padding:15px; text-align:center; color:#999; font-size:12px; background:white; border-radius:30px 30px 0 0">选择操作</div>
@@ -125,14 +124,12 @@
     <button class="as-btn" style="border-radius:0" onclick="closeActionSheet()">取消</button>
 </div>
 
-<!-- Loader -->
 <div id="loader" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);z-index:6000;justify-content:center;align-items:center;flex-direction:column">
     <div style="font-size:35px;animation:spin 1s linear infinite">🧠</div>
     <div style="margin:20px;color:#d35400;font-weight:bold" id="loader-text">AI 正在思考...</div>
     <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
-<!-- 📱 悬浮导航栏 -->
 <div id="tab-bar">
     <div class="tab-item active" onclick="switchTab('shelf')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -162,9 +159,7 @@
     </div>
 </div>
 
-<!-- Main Views -->
 <div id="main-view">
-    <!-- 📚 书架 -->
     <div id="view-shelf" class="view-page active">
         <div style="padding:15px 20px 5px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-weight:bold;font-size:1.4rem;color:var(--text)">我的藏书</span>
@@ -178,7 +173,6 @@
         </div>
     </div>
     
-    <!-- 📂 归档 -->
     <div id="view-timeline" class="view-page">
         <div style="padding:15px 20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 25px 25px">
             <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:var(--text);font-size:16px;padding:0;box-shadow:none;width:auto">
@@ -189,7 +183,6 @@
         <div id="timeline-content" style="padding:20px"></div>
     </div>
 
-    <!-- 🎭 人设 -->
     <div id="view-persona" class="view-page">
         <div style="padding:20px 20px 100px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -200,7 +193,6 @@
         </div>
     </div>
 
-    <!-- ⚙️ 设置 -->
     <div id="view-settings" class="view-page">
         <div style="padding:20px 20px 100px;">
             <span style="font-weight:bold;font-size:1.4rem;color:var(--text);display:block;margin-bottom:20px">系统配置</span>
@@ -218,7 +210,6 @@
                     <label style="font-size:13px;color:#666;display:block;margin-top:10px">API URL</label>
                     <input type="text" id="api-url" onchange="updateCurrentPreset()" placeholder="https://api.openai.com/v1">
                     
-                    <!-- 🚀 完美修复的模型选择区域 -->
                     <label style="font-size:13px;color:#666;display:block;margin-top:10px">模型名称 (可手动输入 或 刷新选择)</label>
                     <input type="text" id="api-model" onchange="updateCurrentPreset()" placeholder="例如: gpt-3.5-turbo">
                     
@@ -228,7 +219,6 @@
                         </select>
                         <button class="btn" onclick="fetchModelsForPreset()" style="background:#a4b0be;margin:0;padding:12px 15px;">🔄 刷新</button>
                     </div>
-                    <!-- 修复结束 -->
                 </div>
             </div>
 
@@ -256,7 +246,6 @@
     </div>
 </div>
 
-<!-- Reader -->
 <div id="reader-overlay">
     <div id="reader-header">
         <button class="btn" style="background:transparent;color:#333;font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
@@ -281,7 +270,6 @@
     </div>
 </div>
 
-<!-- Sidebar -->
 <div id="sidebar">
     <div style="padding:15px 20px;background:white;display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
         <span style="font-weight:bold;font-size:16px;color:var(--text)">📝 批注详情</span>
@@ -307,7 +295,6 @@
     </div>
 </div>
 
-<!-- Config Modal -->
 <div id="book-config-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
     <div class="modal-box">
         <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;background:transparent;border-radius:30px 30px 0 0">
@@ -328,19 +315,14 @@
 </div>
 
 <script>
-    // --- Data & Config Initialization ---
     let DB_NAME = localStorage.getItem('sr_dbname') || 'SoulReaderV20';
     let db, currentBook = null, activeNoteId = null;
 
-    let apiPresets = JSON.parse(localStorage.getItem('sr_api_presets')) ||[
-        { name: "默认配置", url: "https://api.openai.com/v1", key: "", model: "gpt-3.5-turbo" }
-    ];
+    let apiPresets = JSON.parse(localStorage.getItem('sr_api_presets')) ||[ { name: "默认配置", url: "https://api.openai.com/v1", key: "", model: "gpt-3.5-turbo" } ];
     let activePresetIdx = parseInt(localStorage.getItem('sr_active_preset_idx')) || 0;
     if(!apiPresets[activePresetIdx]) activePresetIdx = 0;
 
-    let personas = JSON.parse(localStorage.getItem('sr_personas')) ||[
-        { name: "默认人设", content: "你是一个客观、理性的读书助手。" }
-    ];
+    let personas = JSON.parse(localStorage.getItem('sr_personas')) ||[ { name: "默认人设", content: "你是一个客观、理性的读书助手。" } ];
     let activePersonaIdx = parseInt(localStorage.getItem('sr_active_persona_idx')) || 0;
     if(!personas[activePersonaIdx]) activePersonaIdx = 0;
 
@@ -364,7 +346,6 @@
     function deleteCurrentPreset() { if(apiPresets.length <= 1) return showToast("⚠️ 至少需要保留一个 API 方案"); if(confirm(`确定删除方案【${apiPresets[activePresetIdx].name}】吗？`)) { apiPresets.splice(activePresetIdx, 1); activePresetIdx = 0; saveConfigData(); renderPresetUI(); } }
     function renderPresetUI() { const sel = document.getElementById('preset-select'); sel.innerHTML = ''; apiPresets.forEach((p, i) => sel.add(new Option(p.name, i))); sel.selectedIndex = activePresetIdx; document.getElementById('api-key').value = apiPresets[activePresetIdx].key; document.getElementById('api-url').value = apiPresets[activePresetIdx].url; document.getElementById('api-model').value = apiPresets[activePresetIdx].model; }
     
-    // 🚀 修复模型刷新逻辑
     async function fetchModelsForPreset() { 
         showToast("正在获取模型列表..."); 
         try { 
@@ -374,9 +355,7 @@
             dl.innerHTML = '<option value="">请选择下拉模型...</option>'; 
             (d.data || d).forEach(m => { dl.add(new Option(m.id, m.id)); }); 
             showToast("✅ 刷新成功，请点击左侧下拉框选择"); 
-        } catch(e) { 
-            alert("获取失败，请检查 URL 和 Key 是否正确\n" + e.message); 
-        } 
+        } catch(e) { alert("获取失败，请检查 URL 和 Key 是否正确\n" + e.message); } 
     }
 
     function renderPersonas() {
@@ -482,16 +461,25 @@
     function showActionSheet(nid) { targetNoteId=nid; document.getElementById('as-mask').classList.add('active'); document.getElementById('action-sheet').classList.add('active'); document.getElementById('as-del-btn').onclick=async()=>{ if(!targetNoteId)return; await Store.del('notes',targetNoteId); closeActionSheet(); refreshTimeline(); showToast("🗑️ 已删除"); }; }
     function closeActionSheet(){ document.getElementById('as-mask').classList.remove('active'); document.getElementById('action-sheet').classList.remove('active'); }
 
+    // 🚀 修复核心：把原文片段写死进 System Prompt，强制投喂给AI
     async function triggerAI(n) {
         if(!GS.key) return showToast("⚠️ 请先在设置中配置 API Key");
         openSidebar(n); const l=document.getElementById('chat-list');
         const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px;background:rgba(0,0,0,0.05);border-radius:10px;animation:pulse 1.5s infinite"></div></div><style>@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}</style>`; l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
-        const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); const systemPrompt = `${GS.persona}\n书本记忆：${memoryText}\n背景：${currentBook.context}`;
-        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; if(n.messages.length===0) msgs.push({role:'user', content:`我读到了这段：\n"${n.quote}"\n\n你怎么看？`});
+        
+        const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); 
+        
+        // 这一段是真正的修复点：把原文放进背景板里
+        const systemPrompt = `${GS.persona}\n\n【非常重要：当前用户讨论的原文片段】\n"${n.quote}"\n\n【书籍背景与记忆】\n${currentBook.context}\n${memoryText}`;
+        
+        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; 
+        if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文片段发表你的看法。`});
+        
         let fullText = "";
         try { await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; }); loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`; n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n); } 
         catch(e) { loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c">网络错误或配置有误: ${e.message}</div>`; }
     }
+    
     async function callAPIStream(messages, onChunk) {
         const response = await fetch(`${GS.url}/chat/completions`, {method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages: messages, stream: true })});
         if(!response.ok) throw new Error('API 返回异常状态码');
