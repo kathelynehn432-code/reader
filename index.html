@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V33 (清透拟态版)</title>
+    <title>SoulReader V33 (清透修复版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -11,23 +12,36 @@
 
     <style>
         :root { 
-            --bg: #f8f5e6; /* 你喜欢的护眼米黄 */
+            --bg: #f8f5e6; 
             --accent: #d35400; --text: #2c3e50; 
             --mark-bg: #ffeaa7; --ai-bubble: #ffffff; --user-bubble: #e17055; 
             --safe-bottom: env(safe-area-inset-bottom);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'PingFang SC', serif; margin: 0; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; display: flex; flex-direction: column; padding-bottom: 0; }
         
-        /* 📱 底部悬浮毛玻璃胶囊导航 (和你截图一模一样) */
+        /* 🚀 修复滑动 Bug 的核心代码：锁定视口绝对尺寸 */
+        body { 
+            font-family: 'PingFang SC', serif; 
+            margin: 0; 
+            position: fixed; /* 锁定屏幕，防止浏览器网址栏伸缩导致错位 */
+            inset: 0; 
+            overflow: hidden; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            flex-direction: column; 
+            padding-top: max(10px, env(safe-area-inset-top)); /* 顶部留白，绝不贴边 */
+        }
+        
+        /* 📱 悬浮毛玻璃胶囊导航 */
         #tab-bar { 
             position: fixed; 
-            bottom: max(20px, calc(20px + var(--safe-bottom))); 
+            bottom: max(20px, calc(15px + var(--safe-bottom))); 
             left: 50%; 
             transform: translateX(-50%); 
             width: 90%; 
             max-width: 400px; 
-            height: 68px; 
+            height: 65px; 
             background: rgba(255, 255, 255, 0.65); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px); 
@@ -48,7 +62,6 @@
         .view-page { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 120px; }
         .view-page.active { display: flex; }
 
-        /* 通用软化输入框和卡片 */
         input, select, textarea { width: 100%; border: none; background: rgba(255,255,255,0.6); border-radius: 12px; padding: 12px 15px; font-size: 15px; font-family: inherit; margin-top: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
         input:focus, select:focus, textarea:focus { outline: none; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05), 0 0 0 2px rgba(211,84,0,0.2); }
         .setting-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 18px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.6); }
@@ -56,9 +69,9 @@
         .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn.danger { background: #ff7675; color: white; }
 
-        /* 📚 修复书架尺寸：退回原来小巧精致的大小 */
-        #shelf-list { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px; padding-bottom: 150px; }
-        .book-cover { aspect-ratio: 2/3; border-radius: 10px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 6px 15px rgba(0,0,0,0.12); cursor: pointer; transition: transform 0.2s; }
+        /* 📚 修复书架尺寸：完完全全退回 V32 的精致小巧比例 */
+        #shelf-list { padding: 15px 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 150px; }
+        .book-cover { aspect-ratio: 2/3; border-radius: 8px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
         .book-cover:active { transform: scale(0.95); }
 
         /* 阅读器软化 */
@@ -76,7 +89,6 @@
         #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: #fcfcfc; z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
         #sidebar.active { transform: translateX(0); }
         
-        /* 聊天气泡圆润化 */
         .msg-container { margin-bottom: 18px; display: flex; flex-direction: column; width: 100%; }
         .msg-bubble { max-width: 85%; padding: 14px 16px; border-radius: 20px; font-size: 15px; line-height: 1.6; position: relative; word-wrap: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
         .msg-container.ai { align-items: flex-start; }
@@ -89,24 +101,20 @@
         .action-link:hover { color: var(--accent); }
         .action-link.danger { color: #ff7675; }
 
-        /* 悬浮坞软化 */
         #floating-dock { position: fixed; right: -250px; top: 40%; background: rgba(45,52,54,0.85); backdrop-filter: blur(10px); color: white; border-radius: 25px 0 0 25px; padding: 5px; z-index: 3000; transition: right 0.2s cubic-bezier(0.25, 1, 0.5, 1); display: flex; flex-direction: column; gap: 1px; border-left: 4px solid var(--accent); box-shadow: -5px 10px 30px rgba(0,0,0,0.15); }
         #floating-dock.visible { right: 0; }
         .dock-btn { padding: 14px 22px; font-weight: bold; font-size: 15px; white-space: nowrap; cursor: pointer; user-select: none; transition: background 0.2s; border-radius: 20px; }
         .dock-btn:active { background: rgba(255,255,255,0.1); }
 
-        /* 高亮标记 */
         mark.ai-mark { background: var(--mark-bg); color: inherit; cursor: pointer; border-bottom: 2px solid #e67e22; padding-bottom: 0; margin: 0; border-radius: 4px; padding: 0 2px; }
         .ai-anchor { display: inline-flex; width: 22px; height: 22px; background: var(--accent); color: white; border-radius: 50%; font-size: 10px; justify-content: center; align-items: center; margin-right: 4px; vertical-align: middle; cursor: pointer; box-shadow: 0 2px 5px rgba(211,84,0,0.3); }
         
         #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); color: white; padding: 16px 30px; border-radius: 30px; font-size: 15px; z-index: 9999; display: none; text-align:center; max-width: 80%; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
-        /* 模态框 */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 5000; justify-content: center; align-items: flex-end; }
         .modal-box { background: var(--bg); width: 100%; height: 90vh; border-radius: 30px 30px 0 0; display:flex; flex-direction:column; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: var(--safe-bottom); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* Timeline Groups */
         .tl-book-group { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: 18px; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid rgba(255,255,255,0.8); }
         .tl-header { padding: 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
         .tl-title { font-weight: bold; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px; }
@@ -115,7 +123,6 @@
         .tl-book-group.collapsed .tl-arrow { transform: rotate(-90deg); }
         .tl-note-item { padding: 18px; border-top: 1px solid rgba(0,0,0,0.03); transition: background 0.2s; position: relative; }
 
-        /* Action Sheet */
         #action-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #f9f9f9; z-index: 6000; border-radius: 30px 30px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.15); transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: max(20px, var(--safe-bottom)); }
         #action-sheet.active { transform: translateY(0); }
         .as-btn { display: block; width: 100%; padding: 20px; text-align: center; font-size: 16px; border: none; background: white; color: #333; margin-bottom: 2px; }
@@ -144,28 +151,28 @@
     <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
-<!-- 📱 全新拟态悬浮导航栏 -->
+<!-- 📱 悬浮导航栏 -->
 <div id="tab-bar">
-    <!-- 书架 (极简SVG图标) -->
     <div class="tab-item active" onclick="switchTab('shelf')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </svg>
         <div style="margin-top:2px">书架</div>
     </div>
-    <!-- 归档 (气泡SVG图标) -->
     <div class="tab-item" onclick="switchTab('timeline')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
         <div style="margin-top:2px">归档</div>
     </div>
-    <!-- 🎭 人设 (可爱的颜文字！) -->
+    <!-- 👤 人设：换成了高级极简小人图标 -->
     <div class="tab-item" onclick="switchTab('persona')">
-        <div style="font-size:18px; font-weight:normal; line-height:24px; color:inherit">( ˶ˆᗜˆ˵ )</div>
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
         <div style="margin-top:2px">人设</div>
     </div>
-    <!-- 设置 (齿轮SVG图标) -->
     <div class="tab-item" onclick="switchTab('settings')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -179,7 +186,7 @@
 <div id="main-view">
     <!-- 📚 书架 -->
     <div id="view-shelf" class="view-page active">
-        <div style="padding:30px 20px 10px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="padding:15px 20px 5px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-weight:bold;font-size:1.4rem;color:var(--text)">我的藏书</span>
             <button class="btn" style="background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);color:var(--text);box-shadow:none" onclick="document.getElementById('file-in').click()">➕ 导入文件</button>
             <input type="file" id="file-in" hidden accept=".txt,.pdf,.epub">
@@ -193,7 +200,7 @@
     
     <!-- 📂 归档 -->
     <div id="view-timeline" class="view-page">
-        <div style="padding:20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 25px 25px">
+        <div style="padding:15px 20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 25px 25px">
             <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:var(--text);font-size:16px;padding:0;box-shadow:none;width:auto">
                 <option value="all">📂 全部笔记归档</option>
             </select>
@@ -204,7 +211,7 @@
 
     <!-- 🎭 人设 -->
     <div id="view-persona" class="view-page">
-        <div style="padding:30px 20px 100px;">
+        <div style="padding:20px 20px 100px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                 <span style="font-weight:bold;font-size:1.4rem;color:var(--text)">AI 人设库</span>
                 <button class="btn" style="background:rgba(255,255,255,0.7);color:var(--text);box-shadow:none" onclick="addNewPersona()">➕ 新增人设</button>
@@ -215,10 +222,9 @@
 
     <!-- ⚙️ 设置 -->
     <div id="view-settings" class="view-page">
-        <div style="padding:30px 20px 100px;">
+        <div style="padding:20px 20px 100px;">
             <span style="font-weight:bold;font-size:1.4rem;color:var(--text);display:block;margin-bottom:20px">系统配置</span>
             
-            <!-- API 多开方案 -->
             <div class="setting-card">
                 <label style="font-weight:bold;display:block;margin-bottom:10px;color:#2c3e50">📡 API 预设方案</label>
                 <div style="display:flex;gap:10px;margin-bottom:15px">
@@ -240,7 +246,6 @@
                 </div>
             </div>
 
-            <!-- TXT编码 -->
             <div class="setting-card">
                 <label style="font-weight:bold;display:block;margin-bottom:5px;color:var(--text)">📄 导入乱码修复</label>
                 <div style="font-size:12px;color:#888;margin-bottom:10px">如果导入的TXT是乱码，请切换为 GBK 后重新导入</div>
@@ -250,7 +255,6 @@
                 </select>
             </div>
             
-            <!-- 数据库 -->
             <div class="setting-card">
                 <label style="font-weight:bold;color:var(--text)">💾 旧数据找回</label>
                 <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.5">
@@ -413,7 +417,7 @@
         bs.forEach(b => {
             const op = document.createElement('option'); op.value = b.id; op.innerText = `📖 ${b.title}`; filter.appendChild(op);
             const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;
-            d.innerHTML=`<div style="font-weight:bold;overflow:hidden;max-height:60px;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:8px;opacity:0.9;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
+            d.innerHTML=`<div style="font-weight:bold;font-size:13px;overflow:hidden;max-height:45px;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:6px;opacity:0.9;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
             d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)}; l.appendChild(d);
         });
         if(currentVal && Array.from(filter.options).some(o=>o.value==currentVal)) filter.value = currentVal;
