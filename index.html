@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V39 (极致稳定抢救版)</title>
+    <title>SoulReader V37 (终极稳定版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -16,11 +15,6 @@
             --accent: #d35400; --text: #2c3e50; 
             --mark-bg: #ffeaa7; --ai-bubble: #ffffff; --user-bubble: #e17055; 
             --safe-bottom: env(safe-area-inset-bottom);
-            
-            /* 🎨 阅读器主题专用变量 */
-            --reader-bg: #f8f5e6;
-            --reader-text: #2c3e50;
-            --reader-ui-bg: rgba(248,245,230,0.85);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -29,13 +23,14 @@
             position: fixed; inset: 0; overflow: hidden; 
             background: var(--bg); color: var(--text); 
             display: flex; flex-direction: column; 
-            padding-top: max(10px, env(safe-area-inset-top)); 
+            padding-top: max(10px, env(safe-area-inset-top));
+            transition: background 0.3s ease, color 0.3s ease;
         }
         
         #tab-bar { 
             position: fixed; bottom: max(20px, calc(15px + var(--safe-bottom))); 
             left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 450px; height: 65px; 
+            width: 90%; max-width: 400px; height: 65px; 
             background: rgba(255, 255, 255, 0.65); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
             border: 1px solid rgba(255,255,255,0.8); border-radius: 35px; 
@@ -62,19 +57,20 @@
         .book-cover { aspect-ratio: 2/3; border-radius: 8px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
         .book-cover:active { transform: scale(0.95); }
 
-        /* 🎨 主题动态应用区 */
-        #reader-overlay { position: fixed; inset: 0; background: var(--reader-bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; transition: background 0.3s; }
+        #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; transition: background 0.3s ease; }
         #reader-overlay.active { display: flex; }
-        #reader-header { height: 60px; background: var(--reader-ui-bg); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); transition: background 0.3s; }
-        #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; color: var(--reader-text); transition: color 0.3s; }
+        #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
         
+        #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; transition: color 0.3s ease; }
+        
+        /* 💡 新增的排版优化 */
         #reader-content p { text-indent: 2em; margin: 0 0 1.2em 0; }
-        #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: var(--reader-text); font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(128,128,128,0.15); opacity: 0.9; }
+        #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: #444; font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(0,0,0,0.05); }
 
-        #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: var(--reader-bg); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s; transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
+        #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
         #toc-sidebar.active { transform: translateX(0); }
-        .toc-item { padding: 16px 20px; border-bottom: 1px solid rgba(128,128,128,0.08); font-size: 15px; color: var(--reader-text); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s; opacity: 0.85; }
-        .toc-item:active { background: rgba(128,128,128,0.1); }
+        .toc-item { padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 15px; color: #444; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s; }
+        .toc-item:active { background: #f8f8f8; }
 
         #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: #fcfcfc; z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
         #sidebar.active { transform: translateX(0); }
@@ -96,26 +92,13 @@
         .dock-btn { padding: 14px 22px; font-weight: bold; font-size: 15px; white-space: nowrap; cursor: pointer; user-select: none; transition: background 0.2s; border-radius: 20px; }
         .dock-btn:active { background: rgba(255,255,255,0.1); }
 
-        mark.ai-mark { background: var(--mark-bg); color: #222; cursor: pointer; border-bottom: 2px solid #e67e22; padding-bottom: 0; margin: 0; border-radius: 4px; padding: 0 2px; }
-        
-        #read-progress { position: fixed; bottom: max(20px, calc(15px + var(--safe-bottom))); right: 15px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; z-index: 2000; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
-        #read-progress.show { opacity: 1; }
+        mark.ai-mark { background: var(--mark-bg); color: inherit; cursor: pointer; border-bottom: 2px solid #e67e22; padding-bottom: 0; margin: 0; border-radius: 4px; padding: 0 2px; }
         
         #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); color: white; padding: 16px 30px; border-radius: 30px; font-size: 15px; z-index: 9999; display: none; text-align:center; max-width: 80%; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 5000; justify-content: center; align-items: flex-end; }
         .modal-box { background: var(--bg); width: 100%; height: 90vh; border-radius: 30px 30px 0 0; display:flex; flex-direction:column; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: var(--safe-bottom); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.6); display: flex; flex-direction: column; justify-content: center; }
-        .stat-title { font-size: 13px; color: #888; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-        .stat-value { font-size: 26px; font-weight: bold; color: var(--accent); }
-        .stat-unit { font-size: 12px; font-weight: normal; color: #aaa; margin-left: 4px; }
-
-        .theme-circle { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .theme-circle:active { transform: scale(0.9); }
-        .theme-circle.active { border-color: var(--accent); }
 
         .tl-book-group { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: 18px; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid rgba(255,255,255,0.8); }
         .tl-header { padding: 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
@@ -131,6 +114,24 @@
         .as-btn.danger { color: #ff7675; font-weight: bold; }
         #as-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 5999; display: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(3px); }
         #as-mask.active { display: block; opacity: 1; }
+        
+        /* 📊 阅读进度条 */
+        #reading-progress-bar { position: fixed; bottom: 100px; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.05); z-index: 1500; display: none; }
+        #reading-progress-bar.active { display: block; }
+        #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #e67e22); transition: width 0.1s ease; border-radius: 0 3px 3px 0; }
+        #progress-info { position: fixed; bottom: 105px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 1501; display: none; white-space: nowrap; }
+        #progress-info.active { display: block; }
+        
+        /* 📅 阅读足迹卡片 */
+        .reading-stats-card { background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6)); backdrop-filter: blur(15px); padding: 20px; border-radius: 20px; margin: 15px 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); }
+        .stats-dots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+        .stat-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.1); transition: all 0.2s; }
+        .stat-dot.active { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 8px rgba(211,84,0,0.4); }
+        
+        /* 🎨 主题选择器 */
+        .theme-option { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.5); border-radius: 15px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .theme-option:hover { background: rgba(255,255,255,0.8); }
+        .theme-option.active { border-color: var(--accent); background: rgba(255,255,255,0.9); }
     </style>
 </head>
 <body>
@@ -157,14 +158,6 @@
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
         <div style="margin-top:2px">归档</div>
-    </div>
-    <div class="tab-item" onclick="switchTab('stats')">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="3" y1="9" x2="21" y2="9"></line>
-            <line x1="9" y1="21" x2="9" y2="9"></line>
-        </svg>
-        <div style="margin-top:2px">记录</div>
     </div>
     <div class="tab-item" onclick="switchTab('persona')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -206,36 +199,6 @@
         <div id="timeline-content" style="padding:20px"></div>
     </div>
 
-    <div id="view-stats" class="view-page">
-        <div style="padding:20px 20px 100px;">
-            <span style="font-weight:bold;font-size:1.4rem;color:var(--text);display:block;margin-bottom:20px">阅读记录 ☕</span>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">🔥 连续阅读</div>
-                    <div><span class="stat-value" id="stat-streak">0</span><span class="stat-unit">天</span></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">🌸 今日阅读</div>
-                    <div><span class="stat-value" id="stat-today">0</span><span class="stat-unit">分钟</span></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">⏳ 累计陪伴</div>
-                    <div><span class="stat-value" id="stat-total">0.0</span><span class="stat-unit">小时</span></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">📖 书架藏书</div>
-                    <div><span class="stat-value" id="stat-books">0</span><span class="stat-unit">本</span></div>
-                </div>
-            </div>
-            
-            <div class="setting-card">
-                <div style="font-weight:bold; margin-bottom:5px; font-size: 15px; color: var(--text)">近7天阅读如风 🍃</div>
-                <div id="weekly-chart" style="display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding-top: 25px; gap: 8px;">
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="view-persona" class="view-page">
         <div style="padding:20px 20px 100px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -262,8 +225,16 @@
                     <input type="password" id="api-key" onchange="updateCurrentPreset()" placeholder="sk-...">
                     <label style="font-size:13px;color:#666;display:block;margin-top:10px">API URL</label>
                     <input type="text" id="api-url" onchange="updateCurrentPreset()" placeholder="https://api.openai.com/v1">
-                    <label style="font-size:13px;color:#666;display:block;margin-top:10px">模型名称</label>
+                    
+                    <label style="font-size:13px;color:#666;display:block;margin-top:10px">模型名称 (可手动输入 或 刷新选择)</label>
                     <input type="text" id="api-model" onchange="updateCurrentPreset()" placeholder="例如: gpt-3.5-turbo">
+                    
+                    <div style="display:flex;gap:10px;margin-top:8px;align-items:center;">
+                        <select id="model-list-select" onchange="if(this.value){document.getElementById('api-model').value=this.value; updateCurrentPreset();}" style="margin:0;flex:1;background:rgba(255,255,255,0.8);font-size:14px;">
+                            <option value="">👇 点击右侧刷新获取列表</option>
+                        </select>
+                        <button class="btn" onclick="fetchModelsForPreset()" style="background:#a4b0be;margin:0;padding:12px 15px;">🔄 刷新</button>
+                    </div>
                 </div>
             </div>
 
@@ -278,20 +249,14 @@
             
             <div class="setting-card">
                 <label style="font-weight:bold;color:var(--text)">💾 旧数据找回</label>
-                <div style="display:flex;gap:10px; margin-top:10px">
+                <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.5">
+                    书不见了？可能在旧仓库里。<br>试试输入：<b>SoulReaderV20</b> 找回旧版数据。
+                </div>
+                <div style="display:flex;gap:10px">
                     <input type="text" id="db-name-input" placeholder="输入仓库名..." style="margin:0">
                     <button class="btn" style="background:#34495e" onclick="switchDB()">加载</button>
                 </div>
                 <div style="font-size:12px;color:#d35400;margin-top:10px;font-weight:bold">当前使用仓库: <span id="current-db-display"></span></div>
-            </div>
-
-            <div class="setting-card">
-                <label style="font-weight:bold;color:var(--text)">🚑 数据库急救箱</label>
-                <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.5">
-                    如果你发现书全空了，可以点这里尝试探测手机里遗留的其他仓库名。
-                </div>
-                <button class="btn" style="background:#e74c3c; width:100%" onclick="probeDatabases()">🔍 探测丢失的数据</button>
-                <div id="probe-result" style="font-size:12px;color:#d35400;margin-top:10px;font-weight:bold;white-space:pre-wrap"></div>
             </div>
         </div>
     </div>
@@ -299,38 +264,32 @@
 
 <div id="reader-overlay">
     <div id="reader-header">
-        <button class="btn" style="background:transparent;color:var(--reader-text);font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
+        <button class="btn" style="background:transparent;color:#333;font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
         <button class="btn" style="background:transparent;color:#888;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
-        <span id="book-title-header" style="font-weight:bold;color:var(--reader-text);flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
-        <button class="btn" style="background:transparent;color:var(--reader-text);font-size:20px;padding:0;width:40px;box-shadow:none;margin-right:5px" onclick="document.getElementById('theme-modal').style.display='flex'">🎨</button>
-        <button class="btn" style="background:rgba(128,128,128,0.15);color:var(--reader-text);padding:6px 14px;font-size:13px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠 记忆</button>
+        <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
+        <button class="btn" style="background:transparent;color:#888;font-size:20px;padding:0;width:35px;box-shadow:none" onclick="openThemeSelector()">🎨</button>
+        <button class="btn" style="background:rgba(255,255,255,0.8);color:#555;padding:6px 14px;font-size:13px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠 记忆</button>
     </div>
     
     <div id="toc-sidebar">
-        <div style="padding:18px 20px;background:rgba(128,128,128,0.05);display:flex;justify-content:space-between;align-items:center;height:60px;">
-            <span style="font-weight:bold;font-size:16px">📑 智能目录</span>
-            <button onclick="document.getElementById('toc-sidebar').classList.remove('active')" style="border:none;background:none;font-size:26px;color:var(--reader-text);opacity:0.6;cursor:pointer;">×</button>
+        <div style="padding:18px 20px;background:rgba(248,245,230,0.5);display:flex;justify-content:space-between;align-items:center;height:60px;">
+            <span style="font-weight:bold;color:#444;font-size:16px">📑 智能目录</span>
+            <button onclick="document.getElementById('toc-sidebar').classList.remove('active')" style="border:none;background:none;font-size:26px;color:#a4b0be;cursor:pointer;">×</button>
         </div>
         <div id="toc-list" style="flex:1;overflow-y:auto;background:transparent;padding-bottom:var(--safe-bottom);"></div>
     </div>
 
     <div id="reader-content" onscroll="handleScroll()"></div>
-    <div id="read-progress">0.0%</div>
-
+    
+    <div id="reading-progress-bar">
+        <div id="progress-fill"></div>
+    </div>
+    <div id="progress-info"></div>
+    
     <div id="floating-dock">
         <div class="dock-btn" id="btn-ai">⚡ AI 吐槽</div>
         <div style="height:1px;background:rgba(255,255,255,0.1);margin:0 15px"></div>
         <div class="dock-btn" id="btn-user">✏️ 自己写</div>
-    </div>
-</div>
-
-<div id="theme-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
-    <div class="modal-box" style="height: auto; min-height: 25vh; border-radius: 30px 30px 0 0;">
-        <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-weight:bold;font-size:16px;color:var(--text)">🎨 阅读排版与护眼</span>
-            <span onclick="document.getElementById('theme-modal').style.display='none'" style="cursor:pointer;font-size:26px;color:#a4b0be">×</span>
-        </div>
-        <div style="padding: 10px 30px 40px; display: flex; justify-content: space-between; align-items: center;" id="theme-circle-container"></div>
     </div>
 </div>
 
@@ -355,6 +314,37 @@
         <div style="display:flex;justify-content:flex-end;gap:10px">
             <button class="btn" style="background:#a4b0be;padding:8px 18px;border-radius:20px;box-shadow:none" onclick="sendMsg(false)">仅记录</button>
             <button class="btn" style="background:var(--text);padding:8px 20px;border-radius:20px" onclick="sendMsg(true)">✨ 发送给AI</button>
+        </div>
+    </div>
+</div>
+
+<div id="theme-selector-modal" class="modal" onclick="if(event.target===this)closeThemeSelector()">
+    <div class="modal-box" style="height:auto;max-height:70vh">
+        <div style="padding:20px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:bold;font-size:16px;color:var(--text)">🎨 护眼主题配色</span>
+            <span onclick="closeThemeSelector()" style="cursor:pointer;font-size:26px;color:#a4b0be">×</span>
+        </div>
+        <div style="padding:0 20px 30px">
+            <div class="theme-option" data-theme="default" onclick="switchTheme('default')">
+                <div style="background:#f8f5e6;width:50px;height:50px;border-radius:12px;border:3px solid #2c3e50"></div>
+                <div><div style="font-weight:bold">羊皮纸（默认）</div><div style="font-size:12px;color:#888">温暖复古 · 长时间阅读</div></div>
+            </div>
+            <div class="theme-option" data-theme="green" onclick="switchTheme('green')">
+                <div style="background:#c9e4ca;width:50px;height:50px;border-radius:12px;border:3px solid #2d4a2b"></div>
+                <div><div style="font-weight:bold">豆沙绿</div><div style="font-size:12px;color:#888">护眼经典 · 减少疲劳</div></div>
+            </div>
+            <div class="theme-option" data-theme="warm" onclick="switchTheme('warm')">
+                <div style="background:#fef9e7;width:50px;height:50px;border-radius:12px;border:3px solid #5d4e37"></div>
+                <div><div style="font-weight:bold">暖黄护眼</div><div style="font-size:12px;color:#888">柔和舒适 · 夜间友好</div></div>
+            </div>
+            <div class="theme-option" data-theme="dark" onclick="switchTheme('dark')">
+                <div style="background:#1e1e1e;width:50px;height:50px;border-radius:12px;border:3px solid #d4d4d4"></div>
+                <div><div style="font-weight:bold">柔和夜间</div><div style="font-size:12px;color:#888">深色模式 · 低亮环境</div></div>
+            </div>
+            <div class="theme-option" data-theme="white" onclick="switchTheme('white')">
+                <div style="background:#ffffff;width:50px;height:50px;border-radius:12px;border:3px solid #333"></div>
+                <div><div style="font-weight:bold">纯白简约</div><div style="font-size:12px;color:#888">清爽明亮 · 白天阅读</div></div>
+            </div>
         </div>
     </div>
 </div>
@@ -399,69 +389,55 @@
         set encoding(v) { localStorage.setItem('sr_encoding', v); }
     };
 
-    renderPresetUI(); renderPersonas(); initTheme();
+    renderPresetUI(); renderPersonas();
     document.getElementById('encoding-select').value = GS.encoding;
     document.getElementById('db-name-input').value = DB_NAME;
     document.getElementById('current-db-display').innerText = DB_NAME;
 
-    /* 🎨 主题引擎 */
-    const readerThemes =[
-        { name: '羊皮纸', bg: '#f8f5e6', text: '#2c3e50', ui: 'rgba(248,245,230,0.85)' },
-        { name: '护眼绿', bg: '#e8f5e9', text: '#1b5e20', ui: 'rgba(232,245,233,0.85)' },
-        { name: '极简灰', bg: '#f4f5f7', text: '#333333', ui: 'rgba(244,245,247,0.85)' },
-        { name: '暗夜',   bg: '#181818', text: '#a0a0a0', ui: 'rgba(24,24,24,0.95)' }
-    ];
-    let currentThemeIdx = parseInt(localStorage.getItem('sr_reader_theme') || 0);
-    function initTheme() { applyTheme(currentThemeIdx); }
-    function applyTheme(idx) {
-        currentThemeIdx = idx; localStorage.setItem('sr_reader_theme', idx);
-        let t = readerThemes[idx];
-        document.documentElement.style.setProperty('--reader-bg', t.bg);
-        document.documentElement.style.setProperty('--reader-text', t.text);
-        document.documentElement.style.setProperty('--reader-ui-bg', t.ui);
-        
-        const c = document.getElementById('theme-circle-container'); c.innerHTML = '';
-        readerThemes.forEach((rt, i) => {
-            c.innerHTML += `<div class="theme-circle ${i===currentThemeIdx?'active':''}" style="background:${rt.bg}; border-color:${i===currentThemeIdx?'var(--accent)':'#ddd'}" onclick="applyTheme(${i})"></div>`;
-        });
-    }
-
     function updateCurrentPreset() { apiPresets[activePresetIdx].key = document.getElementById('api-key').value.trim(); apiPresets[activePresetIdx].url = document.getElementById('api-url').value.trim(); apiPresets[activePresetIdx].model = document.getElementById('api-model').value.trim(); saveConfigData(); }
     function switchPreset() { activePresetIdx = document.getElementById('preset-select').selectedIndex; saveConfigData(); renderPresetUI(); }
+    function savePresetAsNew() { const name = prompt("给当前 API 配置方案起个名字：", "新方案"); if(!name) return; apiPresets.push({ name: name, url: document.getElementById('api-url').value.trim(), key: document.getElementById('api-key').value.trim(), model: document.getElementById('api-model').value.trim() }); activePresetIdx = apiPresets.length - 1; saveConfigData(); renderPresetUI(); showToast("✅ 新 API 方案已保存"); }
+    function deleteCurrentPreset() { if(apiPresets.length <= 1) return showToast("⚠️ 至少需要保留一个 API 方案"); if(confirm(`确定删除方案【${apiPresets[activePresetIdx].name}】吗？`)) { apiPresets.splice(activePresetIdx, 1); activePresetIdx = 0; saveConfigData(); renderPresetUI(); } }
     function renderPresetUI() { const sel = document.getElementById('preset-select'); sel.innerHTML = ''; apiPresets.forEach((p, i) => sel.add(new Option(p.name, i))); sel.selectedIndex = activePresetIdx; document.getElementById('api-key').value = apiPresets[activePresetIdx].key; document.getElementById('api-url').value = apiPresets[activePresetIdx].url; document.getElementById('api-model').value = apiPresets[activePresetIdx].model; }
-    function renderPersonas() { const c = document.getElementById('persona-list-container'); c.innerHTML = ''; personas.forEach((p, idx) => { const isActive = idx === activePersonaIdx; const div = document.createElement('div'); div.className = 'setting-card'; div.style.padding = '20px'; div.style.border = isActive ? '2px solid rgba(0,0,0,0.1)' : '1px solid transparent'; div.style.background = isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)'; div.innerHTML = ` <div style="font-weight:bold;font-size:16px;color:var(--text);margin-bottom:10px;">${p.name} ${isActive?'<span style="font-size:11px;background:#f0f0f0;color:#555;padding:3px 8px;border-radius:12px;margin-left:8px;vertical-align:middle">当前生效中</span>':''}</div> <div style="font-size:14px;color:#666;line-height:1.6;margin-bottom:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div> <div style="display:flex;gap:10px;"> ${!isActive ? `<button class="btn" style="flex:1;background:rgba(255,255,255,0.8);color:#333;box-shadow:none;border:1px solid #ddd" onclick="usePersona(${idx})">✅ 设为当前</button>` : ''} <button class="btn" style="background:rgba(0,0,0,0.05);color:#555;padding:10px 15px;box-shadow:none" onclick="editPersona(${idx})">✏️</button> <button class="btn danger" style="padding:10px 15px;box-shadow:none" onclick="deletePersona(${idx})">🗑️</button> </div> `; c.appendChild(div); }); }
+    
+    async function fetchModelsForPreset() { 
+        showToast("正在获取模型列表..."); 
+        try { 
+            const r = await fetch(`${GS.url}/models`, {headers: {'Authorization': `Bearer ${GS.key}`}}); 
+            const d = await r.json(); 
+            const dl = document.getElementById('model-list-select'); 
+            dl.innerHTML = '<option value="">请选择下拉模型...</option>'; 
+            (d.data || d).forEach(m => { dl.add(new Option(m.id, m.id)); }); 
+            showToast("✅ 刷新成功，请点击左侧下拉框选择"); 
+        } catch(e) { alert("获取失败，请检查 URL 和 Key 是否正确\n" + e.message); } 
+    }
+
+    function renderPersonas() {
+        const c = document.getElementById('persona-list-container'); c.innerHTML = '';
+        personas.forEach((p, idx) => {
+            const isActive = idx === activePersonaIdx;
+            const div = document.createElement('div'); div.className = 'setting-card'; div.style.padding = '20px'; div.style.border = isActive ? '2px solid rgba(0,0,0,0.1)' : '1px solid transparent'; div.style.background = isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)';
+            div.innerHTML = `
+                <div style="font-weight:bold;font-size:16px;color:var(--text);margin-bottom:10px;">${p.name} ${isActive?'<span style="font-size:11px;background:#f0f0f0;color:#555;padding:3px 8px;border-radius:12px;margin-left:8px;vertical-align:middle">当前生效中</span>':''}</div>
+                <div style="font-size:14px;color:#666;line-height:1.6;margin-bottom:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${p.content}</div>
+                <div style="display:flex;gap:10px;">
+                    ${!isActive ? `<button class="btn" style="flex:1;background:rgba(255,255,255,0.8);color:#333;box-shadow:none;border:1px solid #ddd" onclick="usePersona(${idx})">✅ 设为当前</button>` : ''}
+                    <button class="btn" style="background:rgba(0,0,0,0.05);color:#555;padding:10px 15px;box-shadow:none" onclick="editPersona(${idx})">✏️</button>
+                    <button class="btn danger" style="padding:10px 15px;box-shadow:none" onclick="deletePersona(${idx})">🗑️</button>
+                </div>
+            `;
+            c.appendChild(div);
+        });
+    }
     function usePersona(idx) { activePersonaIdx = idx; saveConfigData(); renderPersonas(); showToast("✅ AI 人设已切换"); }
+    function addNewPersona() { const name = prompt("给新人设起个名字（如：中二少年）："); if(!name) return; personas.push({ name: name, content: "请在此处填写具体的设定提示词..." }); activePersonaIdx = personas.length - 1; saveConfigData(); renderPersonas(); editPersona(activePersonaIdx); }
+    function editPersona(idx) { const p = personas[idx]; const newContent = prompt(`正在编辑【${p.name}】的设定：\n(如需换行请尽量精简)`, p.content); if(newContent !== null && newContent.trim() !== '') { p.content = newContent; saveConfigData(); renderPersonas(); } }
+    function deletePersona(idx) { if(personas.length <= 1) return showToast("⚠️ 系统至少需要保留一个人设底座哦！"); if(confirm(`确定要删除人设【${personas[idx].name}】吗？`)) { personas.splice(idx, 1); if(activePersonaIdx >= personas.length) activePersonaIdx = personas.length - 1; saveConfigData(); renderPersonas(); } }
     function saveConfigData() { localStorage.setItem('sr_api_presets', JSON.stringify(apiPresets)); localStorage.setItem('sr_active_preset_idx', activePresetIdx); localStorage.setItem('sr_personas', JSON.stringify(personas)); localStorage.setItem('sr_active_persona_idx', activePersonaIdx); }
 
     window.openSidebarById = async function(id) { const n=await Store.get('notes',id); if(n) openSidebar(n); };
     function switchDB() { const newName = document.getElementById('db-name-input').value.trim(); if(!newName || newName === DB_NAME) return; if(confirm(`切换到仓库 "${newName}" 吗？页面将刷新。`)) { localStorage.setItem('sr_dbname', newName); location.reload(); } }
-    
-    // 🚑 数据库急救箱
-    async function probeDatabases() {
-        const res = document.getElementById('probe-result');
-        res.innerText = "正在探测底层数据库碎片...";
-        if (indexedDB.databases) {
-            try {
-                const dbs = await indexedDB.databases();
-                if (!dbs || dbs.length === 0) {
-                    res.innerText = "😭 极其抱歉！浏览器底层已找不到任何数据库痕迹，可能是手机因内存溢出执行了强杀清空。";
-                } else {
-                    let names = dbs.map(d => d.name).filter(n => n.includes('SoulReader') || n.includes('sr_'));
-                    if(names.length > 0) {
-                        res.innerText = "✨ 发现幸存的仓库痕迹：\n" + names.join("\n") + "\n\n(请在上面的框里输入这些名字点加载试试！)";
-                    } else {
-                        res.innerText = "未发现与阅读器相关的存留数据...";
-                    }
-                }
-            } catch(e) {
-                res.innerText = "探测受阻: " + e.message;
-            }
-        } else {
-            res.innerText = "当前浏览器不支持自动探测功能，建议你在上方输入框输入 'SoulReader' 或 'SoulReaderV20' 盲测一下。";
-        }
-    }
-
-    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();refreshStatsUI();}; })}
+    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();}; })}
     const Store={put:(t,d)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).put(d);x.oncomplete=r}),getAll:t=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).getAll().onsuccess=e=>r(e.target.result)}),get:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).get(id).onsuccess=e=>r(e.target.result)}),del:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).delete(id);x.oncomplete=r})};
 
     async function refreshShelf(){
@@ -470,126 +446,137 @@
         const filter = document.getElementById('timeline-filter'); const currentVal = filter.value; filter.innerHTML = '<option value="all">📂 全部笔记归档</option>';
         bs.forEach(b => {
             const op = document.createElement('option'); op.value = b.id; op.innerText = `📖 ${b.title}`; filter.appendChild(op);
-            const wcStr = b.wordCount ? (b.wordCount > 10000 ? (b.wordCount/10000).toFixed(1)+'万字' : b.wordCount+'字') : '字数未知';
             const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;
-            d.innerHTML=`<div style="font-weight:bold;font-size:13px;overflow:hidden;max-height:45px;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:6px;opacity:0.9;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px">${(b.type||'').toUpperCase()} · ${wcStr}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
+            d.innerHTML=`<div style="font-weight:bold;font-size:13px;overflow:hidden;max-height:45px;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:6px;opacity:0.9;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
             d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)}; l.appendChild(d);
         });
         if(currentVal && Array.from(filter.options).some(o=>o.value==currentVal)) filter.value = currentVal;
     }
     
-    // ⏱️ 阅读记录打卡系统
-    let readInterval;
-    function recordReadingTime() {
-        let stats = JSON.parse(localStorage.getItem('sr_stats_v2') || '{}');
-        let today = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-        stats[today] = (stats[today] || 0) + 10; 
-        localStorage.setItem('sr_stats_v2', JSON.stringify(stats));
-        refreshStatsUI();
-    }
-    
-    function calculateStreak(stats) {
-        let streak = 0; let d = new Date();
-        while(true) {
-            let ds = d.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-            if (stats[ds] && stats[ds] > 0) { streak++; d.setDate(d.getDate() - 1); } 
-            else {
-                let todayStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-                if (ds === todayStr) { d.setDate(d.getDate() - 1); } 
-                else break;
-            }
-        } return streak;
-    }
-
-    function refreshStatsUI() {
-        let stats = JSON.parse(localStorage.getItem('sr_stats_v2') || '{}');
-        let todayStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-        let todaySecs = stats[todayStr] || 0;
-        let totalSecs = Object.values(stats).reduce((a,b)=>a+b, 0);
-        
-        document.getElementById('stat-today').innerText = Math.floor(todaySecs / 60);
-        document.getElementById('stat-total').innerText = (totalSecs / 3600).toFixed(1);
-        document.getElementById('stat-streak').innerText = calculateStreak(stats);
-        Store.getAll('books').then(bs => { document.getElementById('stat-books').innerText = bs.length; });
-        
-        let chartHtml = ''; let maxSecs = 1; let last7Days =[];
-        for(let i=6; i>=0; i--) {
-            let d = new Date(); d.setDate(d.getDate() - i);
-            let ds = d.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-            last7Days.push({ label: d.getDate() + '日', secs: stats[ds] || 0 });
-            if (stats[ds] > maxSecs) maxSecs = stats[ds];
-        }
-        
-        last7Days.forEach(day => {
-            let heightPct = Math.max((day.secs / maxSecs) * 100, 5);
-            let isToday = day.label === new Date().getDate() + '日';
-            let color = isToday ? 'var(--accent)' : 'rgba(0,0,0,0.1)';
-            chartHtml += `<div style="display:flex; flex-direction:column; align-items:center; flex:1">
-                <div style="width:14px; height:80px; background:rgba(0,0,0,0.03); border-radius:10px; display:flex; align-items:flex-end; overflow:hidden;">
-                    <div style="width:100%; height:${heightPct}%; background:${color}; border-radius:10px; transition: height 0.8s cubic-bezier(0.25, 1, 0.5, 1);"></div>
-                </div>
-                <div style="font-size:10px; color:#a4b0be; margin-top:8px; font-weight:${isToday?'bold':'normal'}">${day.label}</div>
-            </div>`;
-        });
-        document.getElementById('weekly-chart').innerHTML = chartHtml;
-    }
-
     async function openReader(b){
         currentBook=b; if(!currentBook.memories) currentBook.memories=[]; document.getElementById('reader-overlay').classList.add('active'); document.getElementById('book-title-header').innerText=b.title;
         let tempContent = b.content; let tocHTML = ''; let chapIdx = 0; const chapRegex = /<p>\s*(第[\u4e00-\u9fa50-9零一二三四五六七八九十百千万]+[章回节卷部].{0,30}|Chapter\s*\d+.*?|引子|番外.*?|前言|序言|尾声|后记)<\/p>/g;
         tempContent = tempContent.replace(chapRegex, (match, title) => { chapIdx++; const curId = `toc-chap-${chapIdx}`; tocHTML += `<div class="toc-item" onclick="jumpToChap('${curId}')">${title}</div>`; return `<p id="${curId}" class="chap-title">${title}</p>`; });
         if(chapIdx === 0) tocHTML = '<div style="padding:40px 20px;text-align:center;color:#a4b0be;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇、未分章，或是排版特殊。</div>';
-        document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>{document.getElementById('reader-content').scrollTop=b.scroll; handleScroll();},100);
+        document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
-        readInterval = setInterval(recordReadingTime, 10000);
     }
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
-    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline(); clearInterval(readInterval);}
+    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
 
+    // 🔥 全新重写的【全书字符映射算法】高亮恢复系统：无视乱七八糟的段落、换行、已有高亮打断！绝不消失！
     function restoreHighlights(notes) {
         if(!notes || !notes.length) return; 
         const root = document.getElementById('reader-content'); 
-        let allText = ""; let charMap =[]; let walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false); let n;
+        
+        let allText = "";
+        let charMap =[]; 
+        let walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        
+        // 1. 抽提当前所有的纯文本并映射 DOM 节点（跳过已标记部分，防止错误嵌套）
         while(n = walker.nextNode()) {
             if (n.parentNode && n.parentNode.nodeName === 'MARK') continue; 
             let val = n.nodeValue;
-            for(let j=0; j<val.length; j++) { if (val[j].trim() !== '') { allText += val[j]; charMap.push({ node: n, offset: j }); } }
+            for(let j=0; j<val.length; j++) {
+                if (val[j].trim() !== '') { 
+                    allText += val[j];
+                    charMap.push({ node: n, offset: j });
+                }
+            }
         }
-        let allTextStr = allText; let wrapsToApply =[];
+        
+        let allTextStr = allText;
+        let wrapsToApply =[];
+        
+        // 2. 疯狂匹配所有的金句段落
         notes.forEach(note => { 
             if(root.querySelector(`mark[data-nid="${note.id}"]`)) return; 
+            
             const chunks = note.quote.split(/\n+/).map(s => s.trim()).filter(s => s.length > 0);
+            
             for (let chunk of chunks) {
-                let chunkChars = chunk.replace(/\s+/g, ''); if(!chunkChars) continue;
+                let chunkChars = chunk.replace(/\s+/g, '');
+                if(!chunkChars) continue;
+                
                 let matchIdx = allTextStr.indexOf(chunkChars);
                 if (matchIdx !== -1) {
                     let nodeRanges = new Map();
                     for(let k = matchIdx; k < matchIdx + chunkChars.length; k++) {
-                        let info = charMap[k]; if(!info) continue;
-                        if (!nodeRanges.has(info.node)) nodeRanges.set(info.node, { start: info.offset, end: info.offset }); else nodeRanges.get(info.node).end = info.offset;
+                        let info = charMap[k];
+                        if(!info) continue;
+                        if (!nodeRanges.has(info.node)) {
+                            nodeRanges.set(info.node, { start: info.offset, end: info.offset });
+                        } else {
+                            nodeRanges.get(info.node).end = info.offset;
+                        }
                     }
-                    for (let[node, bounds] of nodeRanges.entries()) wrapsToApply.push({ node: node, start: bounds.start, end: bounds.end, nid: note.id });
-                    let mask = '\0'.repeat(chunkChars.length); allTextStr = allTextStr.substring(0, matchIdx) + mask + allTextStr.substring(matchIdx + chunkChars.length);
+                    
+                    for (let [node, bounds] of nodeRanges.entries()) {
+                        wrapsToApply.push({ node: node, start: bounds.start, end: bounds.end, nid: note.id });
+                    }
+                    
+                    // 用 \0 把匹配过的地方遮起来，避免神仙冲突
+                    let mask = '\0'.repeat(chunkChars.length);
+                    allTextStr = allTextStr.substring(0, matchIdx) + mask + allTextStr.substring(matchIdx + chunkChars.length);
                 }
             }
         });
+        
+        // 3. 将待处理包裹任务按节点分组
         let nodeGroups = new Map();
-        for (let w of wrapsToApply) { if (!nodeGroups.has(w.node)) nodeGroups.set(w.node,[]); nodeGroups.get(w.node).push(w); }
+        for (let w of wrapsToApply) {
+            if (!nodeGroups.has(w.node)) nodeGroups.set(w.node,[]);
+            nodeGroups.get(w.node).push(w);
+        }
+        
+        // 4. 【核心黑魔法】针对同一个文本节点的切分，一定要“倒序”下手！否则前面的包裹会毁掉后面的 offset
         for (let [node, wraps] of nodeGroups.entries()) {
             wraps.sort((a, b) => b.start - a.start);
-            for (let w of wraps) { try { let r = document.createRange(); r.setStart(node, w.start); r.setEnd(node, w.end + 1); let mark = document.createElement('mark'); mark.className = 'ai-mark'; mark.dataset.nid = w.nid; mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(w.nid); }; r.surroundContents(mark); } catch(e) {} }
+            for (let w of wraps) {
+                try {
+                    let r = document.createRange();
+                    r.setStart(node, w.start);
+                    r.setEnd(node, w.end + 1);
+                    let mark = document.createElement('mark');
+                    mark.className = 'ai-mark';
+                    mark.dataset.nid = w.nid;
+                    mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(w.nid); };
+                    r.surroundContents(mark);
+                } catch(e) {}
+            }
         }
     }
     
+    // 🔥 【实时画线系统】稳准狠，锁定当前选区
     function safeHighlightRange(range, nid) {
-        const nodes =[]; let walker = document.createTreeWalker(document.getElementById('reader-content'), NodeFilter.SHOW_TEXT, null, false); let n;
+        const nodes =[];
+        let walker = document.createTreeWalker(document.getElementById('reader-content'), NodeFilter.SHOW_TEXT, null, false);
+        let n;
         while (n = walker.nextNode()) if (range.intersectsNode(n)) nodes.push(n);
+        
         let validNodes = nodes.filter(n => n.nodeValue.trim().length > 0);
         for (let i = validNodes.length - 1; i >= 0; i--) {
-            let node = validNodes[i]; let isStart = node === range.startContainer; let isEnd = node === range.endContainer;
-            let startIdx = isStart ? range.startOffset : 0; let endIdx = isEnd ? range.endOffset : node.nodeValue.length;
+            let node = validNodes[i];
+            let isStart = node === range.startContainer;
+            let isEnd = node === range.endContainer;
+            
+            let startIdx = isStart ? range.startOffset : 0;
+            let endIdx = isEnd ? range.endOffset : node.nodeValue.length;
+            
             if (startIdx >= endIdx) continue;
-            try { let r = document.createRange(); r.setStart(node, startIdx); r.setEnd(node, endIdx); let mark = document.createElement('mark'); mark.className = 'ai-mark'; mark.dataset.nid = nid; mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); }; r.surroundContents(mark); } catch(e) {}
+            
+            try {
+                let r = document.createRange();
+                r.setStart(node, startIdx);
+                r.setEnd(node, endIdx);
+                
+                let mark = document.createElement('mark');
+                mark.className = 'ai-mark';
+                mark.dataset.nid = nid;
+                mark.onclick = (e) => { e.stopPropagation(); window.openSidebarById(nid); };
+                r.surroundContents(mark);
+            } catch(e) {}
         }
     }
 
@@ -599,10 +586,14 @@
     async function createNoteWithSelection(range, text, mode) {
         const allNotes = await Store.getAll('notes'); if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) { window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; }
         document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
+        
         const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; 
         await Store.put('notes', note); 
+        
+        // 精准原位包裹，避免跳动，如果失败再调用智能补救
         try { safeHighlightRange(range, nid); } catch(e) { restoreHighlights([note]); }
         window.getSelection().removeAllRanges(); 
+        
         if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
 
@@ -646,7 +637,9 @@
         const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px;background:rgba(0,0,0,0.05);border-radius:10px;animation:pulse 1.5s infinite"></div></div><style>@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}</style>`; l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
         
         const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); 
+        
         const systemPrompt = `${GS.persona}\n\n【最高指令：当前用户正在讨论的原文片段如下，你必须结合这段原文进行回复！】\n"${n.quote}"\n\n【当前全书背景与长期记忆】\n${currentBook.context}\n${memoryText}`;
+        
         const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; 
         if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文发表你的看法。`});
         
@@ -675,11 +668,9 @@
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     function safeCopy(text) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast("✅ 已复制"); } catch (e) {} document.body.removeChild(ta); }
-    
-    /* 🩹 补回的三个重要按钮功能 */
     async function sendMsg(tai) { const i=document.getElementById('chat-input'); const t=i.value.trim(); const n=await Store.get('notes', activeNoteId); if(t){ n.messages.push({role:'user',content:t,time:Date.now()}); await Store.put('notes',n); renderChat(n.messages); i.value=''; } if(tai) triggerAI(n); }
-    async function deleteMsg(idx) { if(!confirm('确定要删除这条对话吗？'))return; const n = await Store.get('notes', activeNoteId); n.messages.splice(idx, 1); await Store.put('notes', n); renderChat(n.messages); }
-    async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("重新编辑发送内容:", n.messages[idx].content); if(t!==null && t.trim()!==''){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
+    async function deleteMsg(idx) { if(!confirm('删除？'))return; const n = await Store.get('notes', activeNoteId); n.messages.splice(idx, 1); await Store.put('notes', n); renderChat(n.messages); }
+    async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("Edit:", n.messages[idx].content); if(t!==null){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
     async function retryAI() { const n = await Store.get('notes', activeNoteId); if(n.messages.at(-1).role==='ai'){ n.messages.pop(); await Store.put('notes', n); renderChat(n.messages); triggerAI(n); } }
     
     function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
@@ -689,42 +680,138 @@
     async function deleteMemory(idx){ if(confirm("删除这条记忆?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
     async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("点此输入新记忆..."); await Store.put('books', currentBook); renderMemories(); }
     
-    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f); let wc = c.replace(/<[^>]+>/g, '').replace(/\s+/g, '').length; await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],color:`hsl(${Math.random()*360},60%,70%)`, wordCount:wc});refreshShelf(); openBookConfig();refreshStatsUI();}catch(x){alert(x.message)}});
+    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);const wordCount=c.replace(/<[^>]+>/g,'').replace(/\s+/g,'').length;await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],wordCount:wordCount,color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
     
     async function parsePdf(f){const p=await pdfjsLib.getDocument({data:await readArr(f)}).promise;let t='';for(let i=1;i<=p.numPages;i++)t+=(await(await p.getPage(i)).getTextContent()).items.map(s=>s.str).join(' ')+'\n\n';return t}
     async function parseEpub(f){const z=await JSZip.loadAsync(await readArr(f));const p=new DOMParser();let t='';const files=Object.keys(z.files).filter(k=>k.match(/\.x?html$/)).sort();for(let k of files){const doc=p.parseFromString(await z.file(k).async('string'),'text/html');const els=doc.querySelectorAll('p, div');if(els.length>0)els.forEach(el=>{const txt=el.innerText.trim();if(txt)t+=txt+'\n';});else t+=doc.body.innerText+'\n';}return formatTxt(t);}
+    
+    /* 💡 排版引擎强化区 */
     function formatTxt(t){ return t.split(/\r?\n/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     function formatPdf(t){ return t.replace(/([^\n。？！.!?])\n([^\n])/g, '$1$2').split(/\n+/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     
-    function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(()=>{refreshShelf();refreshStatsUI();})}
+    function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(refreshShelf)}
     function switchTab(t){
         document.querySelectorAll('.tab-item').forEach(e=>e.classList.remove('active'));
         document.querySelectorAll('.view-page').forEach(e=>e.classList.remove('active'));
-        const map = {'shelf':0, 'timeline':1, 'stats':2, 'persona':3, 'settings':4};
+        const map = {'shelf':0, 'timeline':1, 'persona':2, 'settings':3};
         document.querySelectorAll('.tab-item')[map[t]].classList.add('active');
         document.getElementById(`view-${t}`).classList.add('active');
         if(t=='timeline') refreshTimeline();
-        if(t=='stats') refreshStatsUI();
+    }
+    // 🎨 主题切换功能
+    const themes = {
+        default: { bg: '#f8f5e6', text: '#2c3e50', header: 'rgba(248,245,230,0.85)' },
+        green: { bg: '#c9e4ca', text: '#2d4a2b', header: 'rgba(201,228,202,0.85)' },
+        warm: { bg: '#fef9e7', text: '#5d4e37', header: 'rgba(254,249,231,0.85)' },
+        dark: { bg: '#1e1e1e', text: '#d4d4d4', header: 'rgba(30,30,30,0.85)' },
+        white: { bg: '#ffffff', text: '#333333', header: 'rgba(255,255,255,0.85)' }
+    };
+    let currentTheme = localStorage.getItem('sr_theme') || 'default';
+    
+    function openThemeSelector() { 
+        document.getElementById('theme-selector-modal').style.display = 'flex';
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.theme === currentTheme);
+        });
+    }
+    function closeThemeSelector() { document.getElementById('theme-selector-modal').style.display = 'none'; }
+    function switchTheme(theme) {
+        currentTheme = theme;
+        localStorage.setItem('sr_theme', theme);
+        const t = themes[theme];
+        document.documentElement.style.setProperty('--bg', t.bg);
+        document.documentElement.style.setProperty('--text', t.text);
+        document.getElementById('reader-header').style.background = t.header;
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.theme === theme);
+        });
+        showToast(`✅ 已切换到${document.querySelector(`[data-theme="${theme}"]`).innerText.split('\n')[0]}`);
+    }
+    switchTheme(currentTheme);
+    
+    // 📊 阅读进度显示功能
+    function updateReadingProgress() {
+        if(!document.getElementById('reader-overlay').classList.contains('active')) return;
+        const content = document.getElementById('reader-content');
+        const scrollTop = content.scrollTop;
+        const scrollHeight = content.scrollHeight - content.clientHeight;
+        const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+        
+        document.getElementById('progress-fill').style.width = progress + '%';
+        document.getElementById('progress-info').innerText = `${progress.toFixed(1)}%`;
+        
+        if(currentBook && currentBook.wordCount) {
+            const readWords = Math.floor((currentBook.wordCount * progress) / 100);
+            document.getElementById('progress-info').innerText = `${progress.toFixed(1)}% · ${readWords}/${currentBook.wordCount}字`;
+        }
     }
     
-    let st, progressEl = document.getElementById('read-progress'); 
-    let scrollTimer;
+    let st; 
     function handleScroll(){ 
-        if(!currentBook) return;
-        const rc = document.getElementById('reader-content');
-        progressEl.classList.add('show');
-        clearTimeout(scrollTimer); scrollTimer = setTimeout(()=>progressEl.classList.remove('show'), 1500);
-        let maxScroll = rc.scrollHeight - rc.clientHeight;
-        let pct = maxScroll > 0 ? ((rc.scrollTop / maxScroll) * 100).toFixed(1) : '100.0';
-        progressEl.innerText = `${pct}%`;
-        if(st)return; st=setTimeout(()=>{st=null; currentBook.scroll=rc.scrollTop; Store.put('books',currentBook)},1000); 
+        updateReadingProgress();
+        document.getElementById('reading-progress-bar').classList.add('active');
+        document.getElementById('progress-info').classList.add('active');
+        
+        if(st)return; 
+        st=setTimeout(()=>{
+            st=null; 
+            if(currentBook){
+                currentBook.scroll=document.getElementById('reader-content').scrollTop;
+                Store.put('books',currentBook);
+                recordReadingActivity();
+            }
+            setTimeout(() => {
+                document.getElementById('progress-info').classList.remove('active');
+            }, 2000);
+        },1000); 
     }
+    
+    // 📅 阅读记录功能
+    function recordReadingActivity() {
+        const today = new Date().toDateString();
+        let readingLog = JSON.parse(localStorage.getItem('sr_reading_log') || '{}');
+        if(!readingLog[today]) readingLog[today] = true;
+        localStorage.setItem('sr_reading_log', JSON.stringify(readingLog));
+    }
+    
+    function renderReadingStats() {
+        const card = document.getElementById('reading-stats-card');
+        if(!card) {
+            const statsCard = document.createElement('div');
+            statsCard.id = 'reading-stats-card';
+            statsCard.className = 'reading-stats-card';
+            statsCard.style.display = 'block';
+            document.getElementById('view-shelf').insertBefore(statsCard, document.getElementById('shelf-list'));
+        }
+        
+        const readingLog = JSON.parse(localStorage.getItem('sr_reading_log') || '{}');
+        const days = Object.keys(readingLog).length;
+        const now = new Date();
+        const dots = [];
+        
+        for(let i = 29; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toDateString();
+            const isActive = readingLog[dateStr];
+            dots.push(`<div class="stat-dot ${isActive ? 'active' : ''}" title="${date.toLocaleDateString()}"></div>`);
+        }
+        
+        document.getElementById('reading-stats-card').innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-weight:bold;font-size:15px;color:var(--text)">📅 最近30天阅读足迹</span>
+                <span id="stats-summary" style="font-size:13px;color:#888">累计 ${days} 天</span>
+            </div>
+            <div class="stats-dots">${dots.join('')}</div>
+        `;
+    }
+    
     window.addEventListener('beforeunload',()=>{if(currentBook){currentBook.scroll=document.getElementById('reader-content').scrollTop;Store.put('books',currentBook)}});
     
     initDB();
+    setTimeout(renderReadingStats, 500);
 </script>
 </body>
 </html>
-
