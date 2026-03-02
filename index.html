@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -123,10 +126,14 @@
         #progress-info.active { display: block; }
         
         /* 📅 阅读足迹卡片 */
-        .reading-stats-card { background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6)); backdrop-filter: blur(15px); padding: 20px; border-radius: 20px; margin: 15px 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); }
-        .stats-dots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-        .stat-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.1); transition: all 0.2s; }
-        .stat-dot.active { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 8px rgba(211,84,0,0.4); }
+        .reading-stats-card { background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(250,250,250,0.7)); backdrop-filter: blur(20px); padding: 22px; border-radius: 22px; margin: 15px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.9); }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
+        .stat-item { background: rgba(255,255,255,0.6); padding: 15px; border-radius: 15px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: bold; color: var(--text); margin-bottom: 4px; }
+        .stat-label { font-size: 12px; color: #888; }
+        .stats-dots { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.08); }
+        .stat-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(0,0,0,0.08); transition: all 0.25s; }
+        .stat-dot.active { background: linear-gradient(135deg, #81c784, #66bb6a); transform: scale(1.2); box-shadow: 0 0 10px rgba(129,199,132,0.5); }
         
         /* 🎨 主题选择器 */
         .theme-option { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.5); border-radius: 15px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
@@ -330,7 +337,7 @@
                 <div><div style="font-weight:bold">羊皮纸（默认）</div><div style="font-size:12px;color:#888">温暖复古 · 长时间阅读</div></div>
             </div>
             <div class="theme-option" data-theme="green" onclick="switchTheme('green')">
-                <div style="background:#c9e4ca;width:50px;height:50px;border-radius:12px;border:3px solid #2d4a2b"></div>
+                <div style="background:#e8f5e9;width:50px;height:50px;border-radius:12px;border:3px solid #2d4a2b"></div>
                 <div><div style="font-weight:bold">豆沙绿</div><div style="font-size:12px;color:#888">护眼经典 · 减少疲劳</div></div>
             </div>
             <div class="theme-option" data-theme="warm" onclick="switchTheme('warm')">
@@ -703,7 +710,7 @@
     // 🎨 主题切换功能
     const themes = {
         default: { bg: '#f8f5e6', text: '#2c3e50', header: 'rgba(248,245,230,0.85)' },
-        green: { bg: '#c9e4ca', text: '#2d4a2b', header: 'rgba(201,228,202,0.85)' },
+        green: { bg: '#e8f5e9', text: '#2d4a2b', header: 'rgba(232,245,233,0.85)' },
         warm: { bg: '#fef9e7', text: '#5d4e37', header: 'rgba(254,249,231,0.85)' },
         dark: { bg: '#1e1e1e', text: '#d4d4d4', header: 'rgba(30,30,30,0.85)' },
         white: { bg: '#ffffff', text: '#333333', header: 'rgba(255,255,255,0.85)' }
@@ -787,10 +794,24 @@
         }
         
         const readingLog = JSON.parse(localStorage.getItem('sr_reading_log') || '{}');
-        const days = Object.keys(readingLog).length;
+        const totalDays = Object.keys(readingLog).length;
         const now = new Date();
-        const dots = [];
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
         
+        // 计算本月阅读天数
+        let thisMonthDays = 0;
+        Object.keys(readingLog).forEach(dateStr => {
+            const d = new Date(dateStr);
+            if(d.getMonth() === thisMonth && d.getFullYear() === thisYear) thisMonthDays++;
+        });
+        
+        // 检查今天是否阅读
+        const todayStr = now.toDateString();
+        const readToday = readingLog[todayStr];
+        
+        // 生成最近30天的点状图
+        const dots = [];
         for(let i = 29; i >= 0; i--) {
             const date = new Date(now);
             date.setDate(date.getDate() - i);
@@ -800,10 +821,21 @@
         }
         
         document.getElementById('reading-stats-card').innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                <span style="font-weight:bold;font-size:15px;color:var(--text)">📅 最近30天阅读足迹</span>
-                <span id="stats-summary" style="font-size:13px;color:#888">累计 ${days} 天</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+                <span style="font-weight:bold;font-size:16px;color:var(--text)">📖 阅读足迹</span>
+                <span style="font-size:12px;color:#a4b0be">${readToday ? '今日已记录 ✨' : '轻松记录每一天'}</span>
             </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${thisMonthDays}</div>
+                    <div class="stat-label">本月阅读</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${totalDays}</div>
+                    <div class="stat-label">累计天数</div>
+                </div>
+            </div>
+            <div style="font-size:12px;color:#a4b0be;margin-bottom:8px">最近30天</div>
             <div class="stats-dots">${dots.join('')}</div>
         `;
     }
