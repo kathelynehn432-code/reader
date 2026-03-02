@@ -655,15 +655,78 @@
         if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文发表你的看法。`});
         
         let fullText = "";
-        try { await callAPIStream(msgs, (chunk) => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; l.scrollTop = l.scrollHeight; }); loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`; n.messages.push({role:'ai', content:fullText, time:Date.now()}); await Store.put('notes', n); } 
-        catch(e) { loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c">网络错误或配置有误: ${e.message}</div>`; }
+        try { 
+            await callAPIStream(msgs, (chunk) => { 
+                fullText += chunk; 
+                loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}<span class="cursor"></span></div>`; 
+                l.scrollTop = l.scrollHeight; 
+            }); 
+            loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div><div class="msg-actions"><span class="action-link" onclick="retryAI()">🔄 重写</span> <span class="action-link danger" onclick="deleteMsg(${n.messages.length})">🗑️ 删除</span></div>`; 
+            n.messages.push({role:'ai', content:fullText, time:Date.now()}); 
+            await Store.put('notes', n); 
+        } 
+        catch(e) { 
+            loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">❌ <b>API 调用失败</b>\n\n${e.message}\n\n<span style="color:#888;font-size:12px;">💡 请检查：\n• API Key 是否正确\n• API URL 是否正确\n• 模型名称是否支持\n• 网络连接是否正常</span></div>`; 
+        }
     }
     
     async function callAPIStream(messages, onChunk) {
-        const response = await fetch(`${GS.url}/chat/completions`, {method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages: messages, stream: true })});
-        if(!response.ok) throw new Error('API 返回异常状态码');
-        const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
-        while (true) { const {done, value} = await reader.read(); if (done) break; buffer += decoder.decode(value, {stream: true}); const lines = buffer.split('\n'); buffer = lines.pop(); for (const line of lines) { if (!line.startsWith('data: ')) continue; const data = line.slice(6).trim(); if (data === '[DONE]') continue; try { const json = JSON.parse(data); const content = json.choices[0]?.delta?.content; if (content) onChunk(content); } catch(e) {} } }
+        const response = await fetch(`${GS.url}/chat/completions`, {
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${GS.key}` 
+            }, 
+            body: JSON.stringify({ 
+                model: GS.model, 
+                messages: messages, 
+                stream: true 
+            })
+        });
+        
+        if(!response.ok) {
+            let errorDetail = `HTTP ${response.status} ${response.statusText}`;
+            try {
+                const errorBody = await response.text();
+                const errorJson = JSON.parse(errorBody);
+                if(errorJson.error) {
+                    errorDetail += `\n\n错误类型: ${errorJson.error.type || '未知'}`;
+                    errorDetail += `\n错误信息: ${errorJson.error.message || errorBody}`;
+                    if(errorJson.error.code) errorDetail += `\n错误代码: ${errorJson.error.code}`;
+                } else {
+                    errorDetail += `\n\n响应内容:\n${errorBody.slice(0, 500)}`;
+                }
+            } catch(e) {
+                errorDetail += `\n\n无法解析错误响应`;
+            }
+            throw new Error(errorDetail);
+        }
+        
+        const reader = response.body.getReader(); 
+        const decoder = new TextDecoder(); 
+        let buffer = '';
+        
+        while (true) { 
+            const {done, value} = await reader.read(); 
+            if (done) break; 
+            buffer += decoder.decode(value, {stream: true}); 
+            const lines = buffer.split('\n'); 
+            buffer = lines.pop(); 
+            
+            for (const line of lines) { 
+                if (!line.startsWith('data: ')) continue; 
+                const data = line.slice(6).trim(); 
+                if (data === '[DONE]') continue; 
+                
+                try { 
+                    const json = JSON.parse(data); 
+                    const content = json.choices[0]?.delta?.content; 
+                    if (content) onChunk(content); 
+                } catch(e) {
+                    console.warn('解析流数据失败:', data, e);
+                }
+            } 
+        }
     }
 
     async function summarizeThread() {
