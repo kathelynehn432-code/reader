@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V38 (护眼沉浸版)</title>
+    <title>SoulReader V39 (极致稳定抢救版)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -68,7 +68,6 @@
         #reader-header { height: 60px; background: var(--reader-ui-bg); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); transition: background 0.3s; }
         #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; color: var(--reader-text); transition: color 0.3s; }
         
-        /* 💡 新增的排版优化 */
         #reader-content p { text-indent: 2em; margin: 0 0 1.2em 0; }
         #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: var(--reader-text); font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(128,128,128,0.15); opacity: 0.9; }
 
@@ -99,7 +98,6 @@
 
         mark.ai-mark { background: var(--mark-bg); color: #222; cursor: pointer; border-bottom: 2px solid #e67e22; padding-bottom: 0; margin: 0; border-radius: 4px; padding: 0 2px; }
         
-        /* ⏱️ 进度胶囊 */
         #read-progress { position: fixed; bottom: max(20px, calc(15px + var(--safe-bottom))); right: 15px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; z-index: 2000; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
         #read-progress.show { opacity: 1; }
         
@@ -109,14 +107,12 @@
         .modal-box { background: var(--bg); width: 100%; height: 90vh; border-radius: 30px 30px 0 0; display:flex; flex-direction:column; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); padding-bottom: var(--safe-bottom); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* 📊 统计页专属 CSS */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.6); display: flex; flex-direction: column; justify-content: center; }
         .stat-title { font-size: 13px; color: #888; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
         .stat-value { font-size: 26px; font-weight: bold; color: var(--accent); }
         .stat-unit { font-size: 12px; font-weight: normal; color: #aaa; margin-left: 4px; }
 
-        /* 🎨 主题色圈 */
         .theme-circle { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .theme-circle:active { transform: scale(0.9); }
         .theme-circle.active { border-color: var(--accent); }
@@ -149,7 +145,6 @@
     <button class="as-btn" style="border-radius:0" onclick="closeActionSheet()">取消</button>
 </div>
 
-<!-- ☕ 底部 Tab 大扩容 -->
 <div id="tab-bar">
     <div class="tab-item active" onclick="switchTab('shelf')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -211,7 +206,6 @@
         <div id="timeline-content" style="padding:20px"></div>
     </div>
 
-    <!-- 📊 全新添加的【无压力】阅读记录面板 -->
     <div id="view-stats" class="view-page">
         <div style="padding:20px 20px 100px;">
             <span style="font-weight:bold;font-size:1.4rem;color:var(--text);display:block;margin-bottom:20px">阅读记录 ☕</span>
@@ -237,7 +231,6 @@
             <div class="setting-card">
                 <div style="font-weight:bold; margin-bottom:5px; font-size: 15px; color: var(--text)">近7天阅读如风 🍃</div>
                 <div id="weekly-chart" style="display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding-top: 25px; gap: 8px;">
-                    <!-- JS 生成 -->
                 </div>
             </div>
         </div>
@@ -291,6 +284,15 @@
                 </div>
                 <div style="font-size:12px;color:#d35400;margin-top:10px;font-weight:bold">当前使用仓库: <span id="current-db-display"></span></div>
             </div>
+
+            <div class="setting-card">
+                <label style="font-weight:bold;color:var(--text)">🚑 数据库急救箱</label>
+                <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.5">
+                    如果你发现书全空了，可以点这里尝试探测手机里遗留的其他仓库名。
+                </div>
+                <button class="btn" style="background:#e74c3c; width:100%" onclick="probeDatabases()">🔍 探测丢失的数据</button>
+                <div id="probe-result" style="font-size:12px;color:#d35400;margin-top:10px;font-weight:bold;white-space:pre-wrap"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -300,10 +302,7 @@
         <button class="btn" style="background:transparent;color:var(--reader-text);font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
         <button class="btn" style="background:transparent;color:#888;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
         <span id="book-title-header" style="font-weight:bold;color:var(--reader-text);flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
-        
-        <!-- 🎨 主题切换按钮 -->
         <button class="btn" style="background:transparent;color:var(--reader-text);font-size:20px;padding:0;width:40px;box-shadow:none;margin-right:5px" onclick="document.getElementById('theme-modal').style.display='flex'">🎨</button>
-        
         <button class="btn" style="background:rgba(128,128,128,0.15);color:var(--reader-text);padding:6px 14px;font-size:13px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠 记忆</button>
     </div>
     
@@ -325,16 +324,13 @@
     </div>
 </div>
 
-<!-- 🎨 主题切换弹窗 -->
 <div id="theme-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
     <div class="modal-box" style="height: auto; min-height: 25vh; border-radius: 30px 30px 0 0;">
         <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;">
             <span style="font-weight:bold;font-size:16px;color:var(--text)">🎨 阅读排版与护眼</span>
             <span onclick="document.getElementById('theme-modal').style.display='none'" style="cursor:pointer;font-size:26px;color:#a4b0be">×</span>
         </div>
-        <div style="padding: 10px 30px 40px; display: flex; justify-content: space-between; align-items: center;" id="theme-circle-container">
-            <!-- 靠 JS 渲染渲染圈圈 -->
-        </div>
+        <div style="padding: 10px 30px 40px; display: flex; justify-content: space-between; align-items: center;" id="theme-circle-container"></div>
     </div>
 </div>
 
@@ -440,21 +436,32 @@
     window.openSidebarById = async function(id) { const n=await Store.get('notes',id); if(n) openSidebar(n); };
     function switchDB() { const newName = document.getElementById('db-name-input').value.trim(); if(!newName || newName === DB_NAME) return; if(confirm(`切换到仓库 "${newName}" 吗？页面将刷新。`)) { localStorage.setItem('sr_dbname', newName); location.reload(); } }
     
-    // 🧮 无感知数据升级补丁：把旧书本的字数也算出来！
-    function backgroundMigration() {
-        Store.getAll('books').then(bs => {
-            let updated = false;
-            bs.forEach(b => {
-                if (b.wordCount === undefined) {
-                    b.wordCount = (b.content||'').replace(/<[^>]+>/g, '').replace(/\s+/g, '').length;
-                    Store.put('books', b); updated = true;
+    // 🚑 数据库急救箱
+    async function probeDatabases() {
+        const res = document.getElementById('probe-result');
+        res.innerText = "正在探测底层数据库碎片...";
+        if (indexedDB.databases) {
+            try {
+                const dbs = await indexedDB.databases();
+                if (!dbs || dbs.length === 0) {
+                    res.innerText = "😭 极其抱歉！浏览器底层已找不到任何数据库痕迹，可能是手机因内存溢出执行了强杀清空。";
+                } else {
+                    let names = dbs.map(d => d.name).filter(n => n.includes('SoulReader') || n.includes('sr_'));
+                    if(names.length > 0) {
+                        res.innerText = "✨ 发现幸存的仓库痕迹：\n" + names.join("\n") + "\n\n(请在上面的框里输入这些名字点加载试试！)";
+                    } else {
+                        res.innerText = "未发现与阅读器相关的存留数据...";
+                    }
                 }
-            });
-            if(updated) refreshShelf();
-        });
+            } catch(e) {
+                res.innerText = "探测受阻: " + e.message;
+            }
+        } else {
+            res.innerText = "当前浏览器不支持自动探测功能，建议你在上方输入框输入 'SoulReader' 或 'SoulReaderV20' 盲测一下。";
+        }
     }
 
-    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();backgroundMigration();refreshStatsUI();}; })}
+    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();refreshStatsUI();}; })}
     const Store={put:(t,d)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).put(d);x.oncomplete=r}),getAll:t=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).getAll().onsuccess=e=>r(e.target.result)}),get:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).get(id).onsuccess=e=>r(e.target.result)}),del:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).delete(id);x.oncomplete=r})};
 
     async function refreshShelf(){
@@ -465,7 +472,7 @@
             const op = document.createElement('option'); op.value = b.id; op.innerText = `📖 ${b.title}`; filter.appendChild(op);
             const wcStr = b.wordCount ? (b.wordCount > 10000 ? (b.wordCount/10000).toFixed(1)+'万字' : b.wordCount+'字') : '字数未知';
             const d=document.createElement('div');d.className='book-cover';d.style.background=b.color;
-            d.innerHTML=`<div style="font-weight:bold;font-size:13px;overflow:hidden;max-height:45px;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:6px;opacity:0.9;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px">${b.type.toUpperCase()} · ${wcStr}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
+            d.innerHTML=`<div style="font-weight:bold;font-size:13px;overflow:hidden;max-height:45px;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,0.2)">${b.title}</div><div style="font-size:10px;margin-top:6px;opacity:0.9;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px">${(b.type||'').toUpperCase()} · ${wcStr}</div><div onclick="delBook(event,'${b.id}')" style="position:absolute;top:-6px;right:-6px;background:rgba(255,255,255,0.9);color:#ff7675;width:22px;height:22px;border-radius:50%;line-height:20px;cursor:pointer;font-weight:bold;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)">×</div>`;
             d.onclick=e=>{if(!e.target.innerText.includes('×'))openReader(b)}; l.appendChild(d);
         });
         if(currentVal && Array.from(filter.options).some(o=>o.value==currentVal)) filter.value = currentVal;
@@ -476,7 +483,7 @@
     function recordReadingTime() {
         let stats = JSON.parse(localStorage.getItem('sr_stats_v2') || '{}');
         let today = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-        stats[today] = (stats[today] || 0) + 10; // 每次加 10 秒
+        stats[today] = (stats[today] || 0) + 10; 
         localStorage.setItem('sr_stats_v2', JSON.stringify(stats));
         refreshStatsUI();
     }
@@ -488,7 +495,7 @@
             if (stats[ds] && stats[ds] > 0) { streak++; d.setDate(d.getDate() - 1); } 
             else {
                 let todayStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/\//g, '-');
-                if (ds === todayStr) { d.setDate(d.getDate() - 1); } // 如果今天是0，不打断，往前查昨天
+                if (ds === todayStr) { d.setDate(d.getDate() - 1); } 
                 else break;
             }
         } return streak;
@@ -534,8 +541,6 @@
         if(chapIdx === 0) tocHTML = '<div style="padding:40px 20px;text-align:center;color:#a4b0be;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇、未分章，或是排版特殊。</div>';
         document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>{document.getElementById('reader-content').scrollTop=b.scroll; handleScroll();},100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
-        
-        // 开始阅读计时
         readInterval = setInterval(recordReadingTime, 10000);
     }
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
@@ -670,7 +675,12 @@
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     function safeCopy(text) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast("✅ 已复制"); } catch (e) {} document.body.removeChild(ta); }
+    
+    /* 🩹 补回的三个重要按钮功能 */
     async function sendMsg(tai) { const i=document.getElementById('chat-input'); const t=i.value.trim(); const n=await Store.get('notes', activeNoteId); if(t){ n.messages.push({role:'user',content:t,time:Date.now()}); await Store.put('notes',n); renderChat(n.messages); i.value=''; } if(tai) triggerAI(n); }
+    async function deleteMsg(idx) { if(!confirm('确定要删除这条对话吗？'))return; const n = await Store.get('notes', activeNoteId); n.messages.splice(idx, 1); await Store.put('notes', n); renderChat(n.messages); }
+    async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("重新编辑发送内容:", n.messages[idx].content); if(t!==null && t.trim()!==''){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
+    async function retryAI() { const n = await Store.get('notes', activeNoteId); if(n.messages.at(-1).role==='ai'){ n.messages.pop(); await Store.put('notes', n); renderChat(n.messages); triggerAI(n); } }
     
     function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
     function saveBookConfig(){currentBook.context=document.getElementById('current-book-context').value;Store.put('books',currentBook);}
@@ -699,21 +709,16 @@
         if(t=='stats') refreshStatsUI();
     }
     
-    // ⏱️ 实时计算百分比 + 存滚动
     let st, progressEl = document.getElementById('read-progress'); 
     let scrollTimer;
     function handleScroll(){ 
         if(!currentBook) return;
         const rc = document.getElementById('reader-content');
-        
-        // 进度百分比
         progressEl.classList.add('show');
         clearTimeout(scrollTimer); scrollTimer = setTimeout(()=>progressEl.classList.remove('show'), 1500);
         let maxScroll = rc.scrollHeight - rc.clientHeight;
         let pct = maxScroll > 0 ? ((rc.scrollTop / maxScroll) * 100).toFixed(1) : '100.0';
         progressEl.innerText = `${pct}%`;
-        
-        // 延迟存滚动
         if(st)return; st=setTimeout(()=>{st=null; currentBook.scroll=rc.scrollTop; Store.put('books',currentBook)},1000); 
     }
     window.addEventListener('beforeunload',()=>{if(currentBook){currentBook.scroll=document.getElementById('reader-content').scrollTop;Store.put('books',currentBook)}});
