@@ -13,10 +13,12 @@
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <style>
-        :root { 
-            --bg: #f8f5e6; 
-            --accent: #d35400; --text: #2c3e50; 
-            --mark-bg: #ffeaa7; --ai-bubble: #ffffff; --user-bubble: #e17055; 
+        :root {
+            --bg: #f8f5e6;
+            --accent: #d35400; --text: #2c3e50;
+            --mark-bg: #ffeaa7; --ai-bubble: #ffffff; --user-bubble: #e17055;
+            --panel-bg: #fcfcfc; --input-bg: #f5f6fa; --card-border: rgba(255,255,255,0.6);
+            --font-size: 19px;
             --safe-bottom: env(safe-area-inset-bottom);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -42,7 +44,8 @@
         }
         .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #888; flex: 1; height: 100%; justify-content: center; transition: all 0.2s; }
         .tab-item:active { transform: scale(0.9); }
-        .tab-item.active { color: #222; font-weight: bold; }
+        .tab-item.active { color: var(--accent); font-weight: bold; }
+        .tab-item.active .tab-icon { stroke: var(--accent); }
         .tab-icon { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2.2; margin-bottom: 3px; }
 
         #main-view { flex: 1; overflow: hidden; position: relative; }
@@ -57,14 +60,14 @@
         .btn.danger { background: #ff7675; color: white; }
 
         #shelf-list { padding: 15px 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 150px; }
-        .book-cover { aspect-ratio: 2/3; border-radius: 8px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .book-cover { aspect-ratio: 2/3; border-radius: 14px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; text-align: center; position: relative; box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .book-cover:active { transform: scale(0.95); }
 
         #reader-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; padding-bottom: 0; transition: background 0.3s ease; }
         #reader-overlay.active { display: flex; }
         #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
         
-        #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: 19px; line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; transition: color 0.3s ease; }
+        #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: var(--font-size); line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; transition: color 0.3s ease, font-size 0.2s ease; }
         
         /* 💡 新增的排版优化 */
         #reader-content p { text-indent: 2em; margin: 0 0 1.2em 0; }
@@ -75,7 +78,7 @@
         .toc-item { padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 15px; color: #444; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s; }
         .toc-item:active { background: #f8f8f8; }
 
-        #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: #fcfcfc; z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
+        #sidebar { position: fixed; top: 0; right: 0; width: 100%; height: 100%; max-width: 450px; background: var(--panel-bg); z-index: 4000; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(100%); display: flex; flex-direction: column; border-radius: 25px 0 0 25px; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
         #sidebar.active { transform: translateX(0); }
         
         .msg-container { margin-bottom: 18px; display: flex; flex-direction: column; width: 100%; }
@@ -301,7 +304,7 @@
 </div>
 
 <div id="sidebar">
-    <div style="padding:15px 20px;background:white;display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
+    <div style="padding:15px 20px;background:var(--panel-bg);display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
         <span style="font-weight:bold;font-size:16px;color:var(--text)">📝 批注详情</span>
         <div style="display:flex;gap:12px;align-items:center">
             <button class="btn" style="background:#f0f0f0;color:#444;padding:6px 12px;font-size:12px;box-shadow:none" onclick="summarizeThread()">✨ 存入记忆</button>
@@ -316,8 +319,8 @@
 
     <div id="chat-list" style="flex:1;overflow-y:auto;padding:20px;background:transparent"></div>
 
-    <div style="padding:15px;background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px;padding-bottom:calc(15px + var(--safe-bottom))">
-        <textarea id="chat-input" rows="1" placeholder="跟当前人设聊聊这段话..." style="margin:0;min-height:45px;resize:none;background:#f5f6fa;border-radius:20px"></textarea>
+    <div style="padding:15px;background:var(--panel-bg);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px;padding-bottom:calc(15px + var(--safe-bottom));border-top:1px solid rgba(0,0,0,0.05)">
+        <textarea id="chat-input" rows="1" placeholder="跟当前人设聊聊这段话..." style="margin:0;min-height:45px;resize:none;background:var(--input-bg);border-radius:20px"></textarea>
         <div style="display:flex;justify-content:flex-end;gap:10px">
             <button class="btn" style="background:#a4b0be;padding:8px 18px;border-radius:20px;box-shadow:none" onclick="sendMsg(false)">仅记录</button>
             <button class="btn" style="background:var(--text);padding:8px 20px;border-radius:20px" onclick="sendMsg(true)">✨ 发送给AI</button>
@@ -326,10 +329,20 @@
 </div>
 
 <div id="theme-selector-modal" class="modal" onclick="if(event.target===this)closeThemeSelector()">
-    <div class="modal-box" style="height:auto;max-height:70vh">
+    <div class="modal-box" style="height:auto;max-height:80vh">
         <div style="padding:20px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-weight:bold;font-size:16px;color:var(--text)">🎨 护眼主题配色</span>
+            <span style="font-weight:bold;font-size:16px;color:var(--text)">🎨 阅读设置</span>
             <span onclick="closeThemeSelector()" style="cursor:pointer;font-size:26px;color:#a4b0be">×</span>
+        </div>
+        <div style="padding:0 20px 10px">
+            <div style="background:rgba(255,255,255,0.5);border-radius:16px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:14px;color:var(--text);font-weight:bold">字体大小</span>
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button onclick="adjustFontSize(-1)" style="border:none;background:rgba(0,0,0,0.06);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">−</button>
+                    <span id="font-size-label" style="font-size:15px;font-weight:bold;min-width:30px;text-align:center;color:var(--text)">19</span>
+                    <button onclick="adjustFontSize(1)" style="border:none;background:rgba(0,0,0,0.06);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">＋</button>
+                </div>
+            </div>
         </div>
         <div style="padding:0 20px 30px">
             <div class="theme-option" data-theme="default" onclick="switchTheme('default')">
@@ -473,7 +486,7 @@
         renderReadingStats();
     }
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
-    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');refreshShelf();refreshTimeline()}
+    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');document.getElementById('reading-progress-bar').classList.remove('active');document.getElementById('progress-info').classList.remove('active');refreshShelf();refreshTimeline();}
 
     // 🔥 全新重写的【全书字符映射算法】高亮恢复系统：无视乱七八糟的段落、换行、已有高亮打断！绝不消失！
     function restoreHighlights(notes) {
@@ -626,8 +639,9 @@
             const b=bs.find(x=>x.id==bid); const g=document.createElement('div'); g.className='tl-book-group';
             g.innerHTML=`<div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')"><span class="tl-title">📖 ${b?b.title:'未知'} <small style="color:#888;font-weight:normal;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:10px">${gs[bid].length} 条</small></span><span class="tl-arrow">▼</span></div><div class="tl-notes-container"></div>`;
             const ct=g.querySelector('.tl-notes-container');
+            const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             gs[bid].sort((a,b)=>b.time-a.time).forEach(n=>{
-                const d=document.createElement('div'); d.className='tl-note-item'; d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px">"${n.quote}"</div><div style="font-size:13px;color:#888;line-height:1.5">${(n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50)}...</div>`;
+                const d=document.createElement('div'); d.className='tl-note-item'; d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px">"${esc(n.quote)}"</div><div style="font-size:13px;color:#888;line-height:1.5">${esc((n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50))}...</div>`;
                 initTimelineItem(d, n.id); d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),400); } }; ct.appendChild(d);
             }); c.appendChild(g);
         });
@@ -754,7 +768,7 @@
     async function deleteMemory(idx){ if(confirm("删除这条记忆?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
     async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("点此输入新记忆..."); await Store.put('books', currentBook); renderMemories(); }
     
-    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);const wordCount=c.replace(/<[^>]+>/g,'').replace(/\s+/g,'').length;await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],wordCount:wordCount,color:`hsl(${Math.random()*360},60%,70%)`});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
+    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);const wordCount=c.replace(/<[^>]+>/g,'').replace(/\s+/g,'').length;await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],wordCount:wordCount,color:['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)','linear-gradient(135deg,#f6d365,#fda085)','linear-gradient(135deg,#fd7043,#ff8a65)'][Math.floor(Math.random()*8)]});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
     
@@ -765,7 +779,7 @@
     function formatTxt(t){ return t.split(/\r?\n/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     function formatPdf(t){ return t.replace(/([^\n。？！.!?])\n([^\n])/g, '$1$2').split(/\n+/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     
-    function delBook(e,id){e.stopPropagation();if(confirm('删除书和笔记？'))Store.del('books',id).then(refreshShelf)}
+    async function delBook(e,id){e.stopPropagation();if(!confirm('删除这本书及所有批注？'))return;await Store.del('books',id);const ns=await Store.getAll('notes');await Promise.all(ns.filter(n=>n.bookId===id).map(n=>Store.del('notes',n.id)));refreshShelf();refreshTimeline();}
     function switchTab(t){
         document.querySelectorAll('.tab-item').forEach(e=>e.classList.remove('active'));
         document.querySelectorAll('.view-page').forEach(e=>e.classList.remove('active'));
@@ -776,34 +790,54 @@
     }
     // 🎨 主题切换功能
     const themes = {
-        default: { bg: '#f8f5e6', text: '#2c3e50', header: 'rgba(248,245,230,0.85)' },
-        green: { bg: '#e8f5e9', text: '#2d4a2b', header: 'rgba(232,245,233,0.85)' },
-        warm: { bg: '#fef9e7', text: '#5d4e37', header: 'rgba(254,249,231,0.85)' },
-        dark: { bg: '#1e1e1e', text: '#d4d4d4', header: 'rgba(30,30,30,0.85)' },
-        white: { bg: '#ffffff', text: '#333333', header: 'rgba(255,255,255,0.85)' }
+        default: { bg: '#f8f5e6', text: '#2c3e50', header: 'rgba(248,245,230,0.85)', markBg: '#ffeaa7', aiBubble: '#ffffff', panel: '#fcfcfc', inputBg: '#f5f6fa', accent: '#d35400' },
+        green:   { bg: '#e8f5e9', text: '#2d4a2b', header: 'rgba(232,245,233,0.85)', markBg: '#c8e6c9', aiBubble: '#f1f8e9', panel: '#f1f8e9', inputBg: '#e8f5e9', accent: '#388e3c' },
+        warm:    { bg: '#fef9e7', text: '#5d4e37', header: 'rgba(254,249,231,0.85)', markBg: '#ffe082', aiBubble: '#fff8e1', panel: '#fff8e1', inputBg: '#fef3c7', accent: '#b7791f' },
+        dark:    { bg: '#1a1a1a', text: '#d4d4d4', header: 'rgba(26,26,26,0.92)',    markBg: '#3d3000', aiBubble: '#2a2a2a', panel: '#242424', inputBg: '#333333', accent: '#e67e22' },
+        white:   { bg: '#ffffff', text: '#333333', header: 'rgba(255,255,255,0.92)', markBg: '#fff176', aiBubble: '#f8f9fa', panel: '#f8f9fa', inputBg: '#f0f0f0', accent: '#d35400' }
     };
     let currentTheme = localStorage.getItem('sr_theme') || 'default';
     
-    function openThemeSelector() { 
+    function openThemeSelector() {
         document.getElementById('theme-selector-modal').style.display = 'flex';
         document.querySelectorAll('.theme-option').forEach(opt => {
             opt.classList.toggle('active', opt.dataset.theme === currentTheme);
         });
+        const lbl = document.getElementById('font-size-label');
+        if(lbl) lbl.innerText = currentFontSize;
     }
     function closeThemeSelector() { document.getElementById('theme-selector-modal').style.display = 'none'; }
     function switchTheme(theme) {
         currentTheme = theme;
         localStorage.setItem('sr_theme', theme);
         const t = themes[theme];
-        document.documentElement.style.setProperty('--bg', t.bg);
-        document.documentElement.style.setProperty('--text', t.text);
+        const root = document.documentElement;
+        root.style.setProperty('--bg', t.bg);
+        root.style.setProperty('--text', t.text);
+        root.style.setProperty('--mark-bg', t.markBg);
+        root.style.setProperty('--ai-bubble', t.aiBubble);
+        root.style.setProperty('--panel-bg', t.panel);
+        root.style.setProperty('--input-bg', t.inputBg);
+        root.style.setProperty('--accent', t.accent);
         document.getElementById('reader-header').style.background = t.header;
         document.querySelectorAll('.theme-option').forEach(opt => {
             opt.classList.toggle('active', opt.dataset.theme === theme);
         });
-        showToast(`✅ 已切换到${document.querySelector(`[data-theme="${theme}"]`).innerText.split('\n')[0]}`);
+        if(theme !== 'default') showToast(`✅ 已切换到${document.querySelector(`[data-theme="${theme}"]`).querySelector('div > div').innerText}`);
     }
     switchTheme(currentTheme);
+
+    // 📝 字体大小控制
+    let currentFontSize = parseInt(localStorage.getItem('sr_font_size')) || 19;
+    function applyFontSize(size) {
+        currentFontSize = Math.min(28, Math.max(14, size));
+        localStorage.setItem('sr_font_size', currentFontSize);
+        document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
+        const lbl = document.getElementById('font-size-label');
+        if(lbl) lbl.innerText = currentFontSize;
+    }
+    function adjustFontSize(delta) { applyFontSize(currentFontSize + delta); }
+    applyFontSize(currentFontSize);
     
     // 📊 阅读进度显示功能
     function updateReadingProgress() {
@@ -873,9 +907,14 @@
             if(d.getMonth() === thisMonth && d.getFullYear() === thisYear) thisMonthDays++;
         });
         
-        // 检查今天是否阅读
+        // 检查今天是否阅读 & 计算连续天数
         const todayStr = now.toDateString();
         const readToday = readingLog[todayStr];
+        let streak = 0;
+        for(let i = 0; i < 365; i++) {
+            const d = new Date(now); d.setDate(d.getDate() - i);
+            if(readingLog[d.toDateString()]) streak++; else break;
+        }
         
         // 生成最近30天的点状图
         const dots = [];
@@ -890,7 +929,7 @@
         document.getElementById('reading-stats-card').innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
                 <span style="font-weight:bold;font-size:16px;color:var(--text)">📖 阅读足迹</span>
-                <span style="font-size:12px;color:#a4b0be">${readToday ? '今日已记录 ✨' : '轻松记录每一天'}</span>
+                <span style="font-size:12px;color:#a4b0be">${streak>=3?`🔥 连续 ${streak} 天`:(readToday ? '今日已记录 ✨' : '轻松记录每一天')}</span>
             </div>
             <div class="stats-grid">
                 <div class="stat-item">
@@ -900,6 +939,14 @@
                 <div class="stat-item">
                     <div class="stat-value">${totalDays}</div>
                     <div class="stat-label">累计天数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color:${streak>=7?'#e67e22':'inherit'}">${streak}${streak>=3?'🔥':''}</div>
+                    <div class="stat-label">连续打卡</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="font-size:20px">${readToday?'✅':'💤'}</div>
+                    <div class="stat-label">今日状态</div>
                 </div>
             </div>
             <div style="font-size:12px;color:#a4b0be;margin-bottom:8px">最近30天</div>
