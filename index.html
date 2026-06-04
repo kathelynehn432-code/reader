@@ -273,8 +273,8 @@
                 <label style="font-weight:bold;color:var(--text)">📦 数据备份与恢复</label>
                 <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">导出备份文件保存到手机/电脑，换设备时导入即可恢复所有书籍、批注和记忆。<br><span style="color:#e67e22">⚠️ 书籍正文内容较大，备份文件可能有几十MB</span></div>
                 <div style="display:flex;gap:10px">
-                    <button class="btn" style="flex:1;background:linear-gradient(135deg,#4facfe,#00f2fe);color:white" onclick="exportAllData()">⬇️ 导出备份</button>
-                    <button class="btn" style="flex:1;background:linear-gradient(135deg,#43e97b,#38f9d7);color:white" onclick="document.getElementById('import-file-in').click()">⬆️ 导入恢复</button>
+                    <button class="btn" style="flex:1;background:var(--accent);color:white" onclick="exportAllData()">⬇️ 导出备份</button>
+                    <button class="btn" style="flex:1;background:rgba(255,255,255,0.85);color:var(--text);box-shadow:none;border:1px solid rgba(0,0,0,0.08)" onclick="document.getElementById('import-file-in').click()">⬆️ 导入恢复</button>
                     <input type="file" id="import-file-in" hidden accept=".json" onchange="importAllData(this)">
                 </div>
             </div>
