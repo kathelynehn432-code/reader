@@ -268,6 +268,16 @@
                 </div>
                 <div style="font-size:12px;color:#d35400;margin-top:10px;font-weight:bold">当前使用仓库: <span id="current-db-display"></span></div>
             </div>
+
+            <div class="setting-card">
+                <label style="font-weight:bold;color:var(--text)">📦 数据备份与恢复</label>
+                <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">导出备份文件保存到手机/电脑，换设备时导入即可恢复所有书籍、批注和记忆。<br><span style="color:#e67e22">⚠️ 书籍正文内容较大，备份文件可能有几十MB</span></div>
+                <div style="display:flex;gap:10px">
+                    <button class="btn" style="flex:1;background:linear-gradient(135deg,#4facfe,#00f2fe);color:white" onclick="exportAllData()">⬇️ 导出备份</button>
+                    <button class="btn" style="flex:1;background:linear-gradient(135deg,#43e97b,#38f9d7);color:white" onclick="document.getElementById('import-file-in').click()">⬆️ 导入恢复</button>
+                    <input type="file" id="import-file-in" hidden accept=".json" onchange="importAllData(this)">
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -954,6 +964,49 @@
         `;
     }
     
+    async function exportAllData() {
+        showToast("📦 正在打包数据...");
+        try {
+            const books = await Store.getAll('books');
+            const notes = await Store.getAll('notes');
+            const settings = {};
+            ['sr_api_presets','sr_active_preset_idx','sr_personas','sr_active_persona_idx','sr_encoding','sr_reading_log','sr_theme','sr_dbname','sr_font_size'].forEach(k => {
+                const v = localStorage.getItem(k);
+                if(v !== null) settings[k] = v;
+            });
+            const payload = { version: 1, exportTime: new Date().toISOString(), dbName: DB_NAME, books, notes, settings };
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SoulReader备份_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`✅ 已导出 ${books.length} 本书、${notes.length} 条批注`);
+        } catch(e) { alert("导出失败：" + e.message); }
+    }
+
+    async function importAllData(input) {
+        const file = input.files[0]; input.value = '';
+        if(!file) return;
+        if(!confirm(`确定要从备份文件恢复吗？\n当前数据不会被清除，只会合并导入。`)) return;
+        showToast("📂 正在读取备份文件...");
+        try {
+            const text = await file.text();
+            const payload = JSON.parse(text);
+            if(!payload.version || !payload.books) throw new Error("不是有效的备份文件");
+            let bCount = 0, nCount = 0;
+            for(const book of payload.books) { await Store.put('books', book); bCount++; }
+            for(const note of payload.notes) { await Store.put('notes', note); nCount++; }
+            if(payload.settings) {
+                const skip = ['sr_dbname'];
+                Object.entries(payload.settings).forEach(([k,v]) => { if(!skip.includes(k)) localStorage.setItem(k,v); });
+            }
+            showToast(`✅ 已恢复 ${bCount} 本书、${nCount} 条批注`);
+            setTimeout(() => location.reload(), 1500);
+        } catch(e) { alert("导入失败：" + e.message); }
+    }
+
     window.addEventListener('beforeunload',()=>{if(currentBook){currentBook.scroll=document.getElementById('reader-content').scrollTop;Store.put('books',currentBook)}});
     
     initDB();
