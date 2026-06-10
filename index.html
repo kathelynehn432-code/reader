@@ -326,8 +326,11 @@
 <div id="reader-overlay">
     <div id="reader-header">
         <button class="btn" style="background:transparent;color:var(--text);font-size:22px;padding:0;width:40px;box-shadow:none;text-align:left" onclick="closeReader()">⬅</button>
-        <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
-        <span id="header-progress" style="font-size:12px;color:#999;font-weight:bold;min-width:40px;text-align:right">0%</span>
+        <div style="flex:1;overflow:hidden;text-align:center;margin:0 8px">
+            <div id="book-title-header" style="font-weight:bold;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="header-progress" style="font-size:11px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">0%</div>
+        </div>
+        <span style="width:40px;flex-shrink:0"></span>
     </div>
     
     <div id="toc-sidebar">
@@ -1082,6 +1085,7 @@
     applyFontSize(currentFontSize);
     
     // 📊 阅读进度显示功能
+    function fmtWords(n){ return n >= 10000 ? (n/10000).toFixed(1).replace(/\.0$/,'') + '万' : String(n); }
     function updateReadingProgress() {
         if(!document.getElementById('reader-overlay').classList.contains('active')) return;
         const content = document.getElementById('reader-content');
@@ -1090,8 +1094,12 @@
         const progress = scrollHeight > 0 ? Math.min(100, (scrollTop / scrollHeight) * 100) : 0;
         document.getElementById('progress-fill').style.width = progress + '%';
         const hp = document.getElementById('header-progress');
-        hp.innerText = `${Math.round(progress)}%`;
-        if(currentBook && currentBook.wordCount) hp.title = `已读约 ${Math.floor(currentBook.wordCount*progress/100)} / ${currentBook.wordCount} 字`;
+        if(currentBook && currentBook.wordCount){
+            const read = Math.floor(currentBook.wordCount * progress / 100);
+            hp.innerText = `${Math.round(progress)}% · ${fmtWords(read)}/${fmtWords(currentBook.wordCount)}字`;
+        } else {
+            hp.innerText = `${Math.round(progress)}%`;
+        }
     }
 
     let st;
