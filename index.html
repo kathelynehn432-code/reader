@@ -67,11 +67,11 @@
         #reader-overlay.active { display: flex; }
         #reader-header { height: 60px; background: rgba(248,245,230,0.85); backdrop-filter: blur(15px); border-bottom: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; flex-shrink: 0; border-radius: 0 0 25px 25px; margin-bottom: 5px; z-index: 10; padding-top: env(safe-area-inset-top); }
         
-        #reader-content { flex: 1; overflow-y: auto; padding: 20px 20px 120px; font-size: var(--font-size); line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; transition: color 0.3s ease, font-size 0.2s ease; }
+        #reader-content { flex: 1; overflow-y: auto; padding: 20px 22px 150px; font-size: var(--font-size); line-height: 1.8; text-align: justify; user-select: text; -webkit-user-select: text; transition: color 0.3s ease, font-size 0.2s ease; }
         
         /* 💡 新增的排版优化 */
         #reader-content p { text-indent: 2em; margin: 0 0 1.2em 0; }
-        #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: #444; font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(0,0,0,0.05); }
+        #reader-content p.chap-title { text-indent: 0; font-weight: bold; color: inherit; opacity: 0.9; font-size: 1.3em; margin-top: 1.5em; padding-bottom: 10px; border-bottom: 2px dashed rgba(127,127,127,0.18); }
 
         #toc-sidebar { position: fixed; top: 0; left: 0; width: 75%; max-width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); z-index: 4500; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); transform: translateX(-100%); display: flex; flex-direction: column; border-radius: 0 25px 25px 0; box-shadow: 10px 0 40px rgba(0,0,0,0.08); }
         #toc-sidebar.active { transform: translateX(0); }
@@ -121,12 +121,16 @@
         #as-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 5999; display: none; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(3px); }
         #as-mask.active { display: block; opacity: 1; }
         
-        /* 📊 阅读进度条 */
-        #reading-progress-bar { position: fixed; bottom: 100px; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.05); z-index: 1500; display: none; }
+        /* 📊 阅读进度条（贴底细线） */
+        #reading-progress-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.05); z-index: 1500; display: none; }
         #reading-progress-bar.active { display: block; }
         #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #e67e22); transition: width 0.1s ease; border-radius: 0 3px 3px 0; }
-        #progress-info { position: fixed; bottom: 105px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 1501; display: none; white-space: nowrap; }
-        #progress-info.active { display: block; }
+
+        /* 🧰 阅读器底部工具栏（与书架页胶囊栏同语言） */
+        #reader-toolbar { position: fixed; bottom: max(18px, calc(12px + var(--safe-bottom))); left: 50%; transform: translateX(-50%); width: 92%; max-width: 420px; height: 62px; background: var(--toolbar-bg, rgba(255,255,255,0.7)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(127,127,127,0.18); border-radius: 31px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 2050; }
+        .rt-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; height: 100%; font-size: 10px; color: #888; cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.15s; border-radius: 31px; }
+        .rt-item:active { transform: scale(0.88); }
+        .rt-icon { font-size: 20px; line-height: 1; }
         
         /* 📅 阅读足迹卡片 */
         .reading-stats-card { background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(250,250,250,0.7)); backdrop-filter: blur(20px); padding: 22px; border-radius: 22px; margin: 15px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.9); }
@@ -144,7 +148,7 @@
         .theme-option.active { border-color: var(--accent); background: rgba(255,255,255,0.9); }
 
         /* 💬 共读对话（悬浮聊天窗口）& 章节结束提示 */
-        #chap-chip { position: fixed; bottom: 115px; left: 50%; transform: translateX(-50%); background: rgba(45,52,54,0.92); backdrop-filter: blur(10px); color: #fff; padding: 10px 16px; border-radius: 25px; font-size: 13px; z-index: 1600; display: none; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.25); max-width: 88%; }
+        #chap-chip { position: fixed; bottom: calc(max(18px, calc(12px + var(--safe-bottom))) + 74px); left: 50%; transform: translateX(-50%); background: rgba(45,52,54,0.92); backdrop-filter: blur(10px); color: #fff; padding: 10px 16px; border-radius: 25px; font-size: 13px; z-index: 2055; display: none; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.25); max-width: 88%; }
         #chap-chip.active { display: flex; }
         #chap-chip b { color: #ffeaa7; cursor: pointer; white-space: nowrap; }
         .convo-item { padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: background 0.2s; border-radius: 12px; }
@@ -321,12 +325,9 @@
 
 <div id="reader-overlay">
     <div id="reader-header">
-        <button class="btn" style="background:transparent;color:#333;font-size:22px;padding:0;width:30px;box-shadow:none" onclick="closeReader()">⬅</button>
-        <button class="btn" style="background:transparent;color:#888;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
-        <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
-        <button class="btn" style="background:transparent;color:#888;font-size:20px;padding:0;width:35px;box-shadow:none" onclick="openThemeSelector()">🎨</button>
-        <button class="btn" style="background:transparent;color:#888;font-size:20px;padding:0;width:35px;box-shadow:none" onclick="openChatOverlay()">💬</button>
-        <button class="btn" style="background:rgba(255,255,255,0.8);color:#555;padding:6px 12px;font-size:16px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠</button>
+        <button class="btn" style="background:transparent;color:var(--text);font-size:22px;padding:0;width:40px;box-shadow:none;text-align:left" onclick="closeReader()">⬅</button>
+        <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
+        <span id="header-progress" style="font-size:12px;color:#999;font-weight:bold;min-width:40px;text-align:right">0%</span>
     </div>
     
     <div id="toc-sidebar">
@@ -342,8 +343,14 @@
     <div id="reading-progress-bar">
         <div id="progress-fill"></div>
     </div>
-    <div id="progress-info"></div>
-    
+
+    <div id="reader-toolbar">
+        <div class="rt-item" onclick="document.getElementById('toc-sidebar').classList.add('active')"><span class="rt-icon">📑</span><span>目录</span></div>
+        <div class="rt-item" onclick="openChatOverlay()"><span class="rt-icon">💬</span><span>共读</span></div>
+        <div class="rt-item" onclick="openBookConfig()"><span class="rt-icon">🧠</span><span>大脑</span></div>
+        <div class="rt-item" onclick="openThemeSelector()"><span class="rt-icon">🎨</span><span>外观</span></div>
+    </div>
+
     <div id="floating-dock">
         <div class="dock-btn" id="btn-ai">💬 发问</div>
         <div style="height:1px;background:rgba(255,255,255,0.1);margin:0 15px"></div>
@@ -581,14 +588,14 @@
 
         // 📍 章节定位（实时截取层）：记录各章位置，初始化"读到第几章"
         currentConvo = null; hideChapChip();
-        setTimeout(()=>{ computeChapPositions(); if(currentBook && currentBook.maxChapSeen===undefined){ const ch=currentChapAt(document.getElementById('reader-content').scrollTop); currentBook.maxChapSeen=ch?ch.idx:0; Store.put('books',currentBook); } },300);
+        setTimeout(()=>{ computeChapPositions(); updateReadingProgress(); if(currentBook && currentBook.maxChapSeen===undefined){ const ch=currentChapAt(document.getElementById('reader-content').scrollTop); currentBook.maxChapSeen=ch?ch.idx:0; Store.put('books',currentBook); } },300);
 
         // 📅 打开书籍即记录阅读活动
         recordReadingActivity();
         renderReadingStats();
     }
     window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { const m = id.match(/toc-chap-(\d+)/); if(m && currentBook){ const idx = parseInt(m[1]); if(idx > (currentBook.maxChapSeen||0)){ currentBook.maxChapSeen = idx; Store.put('books', currentBook); } } document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
-    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');document.getElementById('reading-progress-bar').classList.remove('active');document.getElementById('progress-info').classList.remove('active');hideChapChip();closeChatOverlay();refreshShelf();refreshTimeline();}
+    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');document.getElementById('reading-progress-bar').classList.remove('active');hideChapChip();closeChatOverlay();refreshShelf();refreshTimeline();}
 
     // 🔥 全新重写的【全书字符映射算法】高亮恢复系统：无视乱七八糟的段落、换行、已有高亮打断！绝不消失！
     function restoreHighlights(notes) {
@@ -1053,6 +1060,7 @@
         root.style.setProperty('--panel-bg', t.panel);
         root.style.setProperty('--input-bg', t.inputBg);
         root.style.setProperty('--accent', t.accent);
+        root.style.setProperty('--toolbar-bg', t.header);
         document.getElementById('reader-header').style.background = t.header;
         document.querySelectorAll('.theme-option').forEach(opt => {
             opt.classList.toggle('active', opt.dataset.theme === theme);
@@ -1079,23 +1087,17 @@
         const content = document.getElementById('reader-content');
         const scrollTop = content.scrollTop;
         const scrollHeight = content.scrollHeight - content.clientHeight;
-        const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-        
+        const progress = scrollHeight > 0 ? Math.min(100, (scrollTop / scrollHeight) * 100) : 0;
         document.getElementById('progress-fill').style.width = progress + '%';
-        document.getElementById('progress-info').innerText = `${progress.toFixed(1)}%`;
-        
-        if(currentBook && currentBook.wordCount) {
-            const readWords = Math.floor((currentBook.wordCount * progress) / 100);
-            document.getElementById('progress-info').innerText = `${progress.toFixed(1)}% · ${readWords}/${currentBook.wordCount}字`;
-        }
+        const hp = document.getElementById('header-progress');
+        hp.innerText = `${Math.round(progress)}%`;
+        if(currentBook && currentBook.wordCount) hp.title = `已读约 ${Math.floor(currentBook.wordCount*progress/100)} / ${currentBook.wordCount} 字`;
     }
-    
-    let st; 
-    function handleScroll(){ 
+
+    let st;
+    function handleScroll(){
         updateReadingProgress();
         document.getElementById('reading-progress-bar').classList.add('active');
-        document.getElementById('progress-info').classList.add('active');
-        
         if(st)return;
         st=setTimeout(()=>{
             st=null;
@@ -1105,10 +1107,7 @@
                 recordReadingActivity();
                 checkChapterCross();
             }
-            setTimeout(() => {
-                document.getElementById('progress-info').classList.remove('active');
-            }, 2000);
-        },1000); 
+        },1000);
     }
     
     // 📅 阅读记录功能
