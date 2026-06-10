@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SoulReader V37 (终极稳定版)</title>
+    <title>SoulReader · 灵犀 V38</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -142,6 +142,19 @@
         .theme-option { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.5); border-radius: 15px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
         .theme-option:hover { background: rgba(255,255,255,0.8); }
         .theme-option.active { border-color: var(--accent); background: rgba(255,255,255,0.9); }
+
+        /* 💬 共读对话（悬浮聊天窗口）& 章节结束提示 */
+        #chap-chip { position: fixed; bottom: 115px; left: 50%; transform: translateX(-50%); background: rgba(45,52,54,0.92); backdrop-filter: blur(10px); color: #fff; padding: 10px 16px; border-radius: 25px; font-size: 13px; z-index: 1600; display: none; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.25); max-width: 88%; }
+        #chap-chip.active { display: flex; }
+        #chap-chip b { color: #ffeaa7; cursor: pointer; white-space: nowrap; }
+        .convo-item { padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: background 0.2s; border-radius: 12px; }
+        .convo-item:active { background: rgba(0,0,0,0.03); }
+        .convo-item.current { background: rgba(211,84,0,0.08); }
+        .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(211,84,0,0.1); color: var(--accent); font-size: 11px; padding: 3px 9px; border-radius: 10px; margin: 2px 4px 2px 0; }
+        .tag-chip .tag-x { cursor: pointer; opacity: 0.6; }
+        .note-type-badge { font-size: 10px; background: rgba(0,0,0,0.06); color: #777; padding: 2px 7px; border-radius: 8px; margin-right: 6px; vertical-align: middle; white-space: nowrap; }
+        .storage-bar { height: 10px; background: rgba(0,0,0,0.06); border-radius: 5px; overflow: hidden; margin: 8px 0; }
+        .storage-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), #e67e22); border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -200,11 +213,17 @@
     </div>
     
     <div id="view-timeline" class="view-page">
-        <div style="padding:15px 20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 25px 25px">
-            <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:var(--text);font-size:16px;padding:0;box-shadow:none;width:auto">
-                <option value="all">📂 全部笔记归档</option>
-            </select>
-            <span style="font-size:12px;color:#a4b0be">长按管理</span>
+        <div style="padding:12px 20px;background:rgba(255,255,255,0.6);backdrop-filter:blur(15px);position:sticky;top:0;z-index:10;border-radius:0 0 25px 25px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <select id="timeline-filter" onchange="refreshTimeline()" style="margin:0;border:none;background:transparent;font-weight:bold;color:var(--text);font-size:16px;padding:0;box-shadow:none;width:auto;max-width:55%">
+                    <option value="all">📂 全部笔记归档</option>
+                </select>
+                <div style="display:flex;gap:8px">
+                    <button class="btn" style="background:rgba(255,255,255,0.8);color:var(--text);box-shadow:none;padding:8px 12px;font-size:12px" onclick="addFreeNote()">✍️ 随想</button>
+                    <button class="btn" style="background:rgba(255,255,255,0.8);color:var(--text);box-shadow:none;padding:8px 12px;font-size:12px" onclick="exportMarkdown()">⬇️ MD</button>
+                </div>
+            </div>
+            <input type="text" id="timeline-search" placeholder="🔍 跨书搜索：笔记 / 标签 / 对话内容..." oninput="refreshTimeline()" style="margin:0;background:rgba(255,255,255,0.8);font-size:14px;padding:10px 14px">
         </div>
         <div id="timeline-content" style="padding:20px"></div>
     </div>
@@ -271,11 +290,29 @@
 
             <div class="setting-card">
                 <label style="font-weight:bold;color:var(--text)">📦 数据备份与恢复</label>
-                <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">导出备份文件保存到手机/电脑，换设备时导入即可恢复所有书籍、批注和记忆。<br><span style="color:#e67e22">⚠️ 书籍正文内容较大，备份文件可能有几十MB</span></div>
+                <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">导出备份文件保存到手机/电脑，换设备时导入即可恢复所有书籍、批注、对话和记忆。<br><span style="color:#e67e22">💡 新版备份会用 gzip 压缩（.json.gz），体积更小；旧版 .json 备份也能直接导入</span></div>
                 <div style="display:flex;gap:10px">
                     <button class="btn" style="flex:1;background:var(--accent);color:white" onclick="exportAllData()">⬇️ 导出备份</button>
                     <button class="btn" style="flex:1;background:rgba(255,255,255,0.85);color:var(--text);box-shadow:none;border:1px solid rgba(0,0,0,0.08)" onclick="document.getElementById('import-file-in').click()">⬆️ 导入恢复</button>
-                    <input type="file" id="import-file-in" hidden accept=".json" onchange="importAllData(this)">
+                    <input type="file" id="import-file-in" hidden accept=".json,.gz" onchange="importAllData(this)">
+                </div>
+            </div>
+
+            <div class="setting-card">
+                <label style="font-weight:bold;color:var(--text)">🧠 向量记忆检索 (bge-m3)</label>
+                <div style="font-size:12px;color:#888;margin:6px 0 10px;line-height:1.6">开启后，AI 对话时会先用余弦相似度召回与当前话题最相关的记忆和笔记，再注入语境（需要支持 /embeddings 的服务，如 SiliconFlow 的 BAAI/bge-m3）。URL/Key 留空则复用上方 API 配置。未开启时退回「最新记忆直接注入」模式。</div>
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:8px;font-weight:bold;color:var(--text)"><input type="checkbox" id="emb-on" style="width:auto;margin:0" onchange="saveEmbCfg()"> 启用向量检索</label>
+                <input type="text" id="emb-url" placeholder="Embedding API URL（留空 = 同上方 API URL）" onchange="saveEmbCfg()">
+                <input type="password" id="emb-key" placeholder="Embedding API Key（留空 = 同上方 Key）" onchange="saveEmbCfg()">
+                <input type="text" id="emb-model" placeholder="模型名（留空 = BAAI/bge-m3）" onchange="saveEmbCfg()">
+            </div>
+
+            <div class="setting-card">
+                <label style="font-weight:bold;color:var(--text)">💽 存储空间</label>
+                <div id="storage-info" style="font-size:13px;color:#666;margin-top:10px">加载中...</div>
+                <div style="display:flex;gap:10px;margin-top:12px">
+                    <button class="btn" style="flex:1;background:rgba(255,255,255,0.85);color:var(--text);box-shadow:none;border:1px solid rgba(0,0,0,0.08)" onclick="cleanArchivedConvos()">🧹 清理已归档对话</button>
+                    <button class="btn" style="flex:1;background:rgba(255,255,255,0.85);color:var(--text);box-shadow:none;border:1px solid rgba(0,0,0,0.08)" onclick="clearChapterCache()">🧹 清空章节摘要</button>
                 </div>
             </div>
         </div>
@@ -288,7 +325,8 @@
         <button class="btn" style="background:transparent;color:#888;font-size:22px;padding:0;width:40px;box-shadow:none" onclick="document.getElementById('toc-sidebar').classList.add('active')">📑</button>
         <span id="book-title-header" style="font-weight:bold;flex:1;text-align:center;margin:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></span>
         <button class="btn" style="background:transparent;color:#888;font-size:20px;padding:0;width:35px;box-shadow:none" onclick="openThemeSelector()">🎨</button>
-        <button class="btn" style="background:rgba(255,255,255,0.8);color:#555;padding:6px 14px;font-size:13px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠 记忆</button>
+        <button class="btn" style="background:transparent;color:#888;font-size:20px;padding:0;width:35px;box-shadow:none" onclick="openChatOverlay()">💬</button>
+        <button class="btn" style="background:rgba(255,255,255,0.8);color:#555;padding:6px 12px;font-size:16px;box-shadow:none;border-radius:12px" onclick="openBookConfig()">🧠</button>
     </div>
     
     <div id="toc-sidebar">
@@ -307,24 +345,34 @@
     <div id="progress-info"></div>
     
     <div id="floating-dock">
-        <div class="dock-btn" id="btn-ai">⚡ AI 吐槽</div>
+        <div class="dock-btn" id="btn-ai">💬 发问</div>
         <div style="height:1px;background:rgba(255,255,255,0.1);margin:0 15px"></div>
-        <div class="dock-btn" id="btn-user">✏️ 自己写</div>
+        <div class="dock-btn" id="btn-user">✏️ 标注</div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:0 15px"></div>
+        <div class="dock-btn" id="btn-copy">📋 复制</div>
+    </div>
+
+    <div id="chap-chip">
+        <span id="chap-chip-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <b onclick="chapChipChat()">和AI聊聊本章</b>
+        <span onclick="hideChapChip()" style="cursor:pointer;opacity:0.7;padding:0 2px">✕</span>
     </div>
 </div>
 
 <div id="sidebar">
     <div style="padding:15px 20px;background:var(--panel-bg);display:flex;justify-content:space-between;align-items:center;height:65px;border-radius:25px 0 0 0">
         <span style="font-weight:bold;font-size:16px;color:var(--text)">📝 批注详情</span>
-        <div style="display:flex;gap:12px;align-items:center">
-            <button class="btn" style="background:#f0f0f0;color:#444;padding:6px 12px;font-size:12px;box-shadow:none" onclick="summarizeThread()">✨ 存入记忆</button>
+        <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn" style="background:#f0f0f0;color:#444;padding:6px 10px;font-size:12px;box-shadow:none" onclick="continueDiscussion()">💬 继续讨论</button>
+            <button class="btn" style="background:#f0f0f0;color:#444;padding:6px 10px;font-size:12px;box-shadow:none" onclick="summarizeThread()">🧠 入记忆</button>
             <button onclick="document.getElementById('sidebar').classList.remove('active')" style="border:none;background:none;font-size:26px;color:#a4b0be;padding:0">×</button>
         </div>
     </div>
-    
+
     <div id="chat-quote-container" style="padding:18px 20px;background:#fdfdfd;box-shadow:inset 0 -2px 10px rgba(0,0,0,0.01);">
         <div style="font-size:12px;color:#a4b0be;margin-bottom:8px">原文摘录：</div>
         <div id="chat-quote" style="font-style:italic;color:#555;font-size:15px;line-height:1.5;max-height:85px;overflow-y:auto;border-left:4px solid #ddd;padding-left:10px"></div>
+        <div id="note-tags" style="margin-top:10px"></div>
     </div>
 
     <div id="chat-list" style="flex:1;overflow-y:auto;padding:20px;background:transparent"></div>
@@ -334,6 +382,28 @@
         <div style="display:flex;justify-content:flex-end;gap:10px">
             <button class="btn" style="background:#a4b0be;padding:8px 18px;border-radius:20px;box-shadow:none" onclick="sendMsg(false)">仅记录</button>
             <button class="btn" style="background:var(--text);padding:8px 20px;border-radius:20px" onclick="sendMsg(true)">✨ 发送给AI</button>
+        </div>
+    </div>
+</div>
+
+<div id="chat-overlay" class="modal" onclick="if(event.target===this)closeChatOverlay()">
+    <div class="modal-box" style="height:92vh">
+        <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+            <span style="font-weight:bold;font-size:16px;color:var(--text)">💬 共读对话</span>
+            <div style="display:flex;gap:10px;align-items:center">
+                <button class="btn" style="background:rgba(0,0,0,0.05);color:#555;padding:6px 12px;font-size:12px;box-shadow:none" onclick="toggleConvoList()">📚 会话列表</button>
+                <button class="btn" style="background:var(--accent);padding:6px 12px;font-size:12px" onclick="newFreeConvo()">➕ 漫谈</button>
+                <span onclick="closeChatOverlay()" style="cursor:pointer;font-size:26px;color:#a4b0be;line-height:1">×</span>
+            </div>
+        </div>
+        <div id="convo-list-panel" style="display:none;flex:1;overflow-y:auto;padding:5px 15px 30px"></div>
+        <div id="convo-chat-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+            <div id="convo-anchor" style="display:none;padding:10px 20px;font-size:12px;color:#888;background:rgba(0,0,0,0.02);border-bottom:1px solid rgba(0,0,0,0.04);max-height:64px;overflow-y:auto"></div>
+            <div id="convo-msgs" style="flex:1;overflow-y:auto;padding:20px"></div>
+            <div style="padding:12px 15px;display:flex;gap:10px;border-top:1px solid rgba(0,0,0,0.05);flex-shrink:0">
+                <textarea id="convo-input" rows="1" placeholder="漫谈、提问、随便聊聊这本书..." style="margin:0;min-height:45px;resize:none;background:var(--input-bg);border-radius:20px;flex:1"></textarea>
+                <button class="btn" style="background:var(--text);border-radius:20px;align-self:flex-end" onclick="sendConvoMsg()">发送</button>
+            </div>
         </div>
     </div>
 </div>
@@ -387,11 +457,24 @@
         </div>
         <div style="flex:1;overflow-y:auto;padding:20px;">
             <div class="setting-card">
-                 <label style="font-size:14px;font-weight:bold;display:block;margin-bottom:10px;color:#2c3e50">📚 书籍背景 / 摘要</label>
+                 <label style="font-size:14px;font-weight:bold;display:block;margin-bottom:10px;color:#2c3e50">📇 书目信息（精确索引）</label>
+                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                     <input type="text" id="meta-author" placeholder="作者" onchange="saveBookMeta()" style="margin:0">
+                     <input type="text" id="meta-year" placeholder="出版年份" onchange="saveBookMeta()" style="margin:0">
+                     <input type="text" id="meta-publisher" placeholder="出版社" onchange="saveBookMeta()" style="margin:0">
+                     <input type="text" id="meta-isbn" placeholder="ISBN" onchange="saveBookMeta()" style="margin:0">
+                 </div>
+                 <button class="btn" style="width:100%;margin-top:12px;background:rgba(255,255,255,0.8);color:#444;box-shadow:none" onclick="fetchBookMeta(false)">🔍 AI 检索书目信息（自动补全）</button>
+            </div>
+            <div class="setting-card">
+                 <label style="font-size:14px;font-weight:bold;display:block;margin-bottom:10px;color:#2c3e50">📚 书籍背景 / 成书语境</label>
                  <textarea id="current-book-context" rows="3" placeholder="这本书讲了什么..." onchange="saveBookConfig()" style="background:rgba(255,255,255,0.5)"></textarea>
                  <button class="btn" style="width:100%;margin-top:12px;background:rgba(255,255,255,0.8);color:#444;box-shadow:none" onclick="autoAnalyze()">✨ AI 自动提取全书背景</button>
             </div>
-            <div style="font-size:14px;font-weight:bold;margin-bottom:15px;color:#2c3e50;padding-left:5px">🧠 长期记忆卡片 (与AI交流时生效)</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-left:5px">
+                <span style="font-size:14px;font-weight:bold;color:#2c3e50">🧠 长期记忆卡片 (与AI交流时生效)</span>
+                <button class="btn" style="background:rgba(0,0,0,0.05);color:#555;padding:6px 12px;font-size:12px;box-shadow:none" onclick="vectorizeBook()">⚡ 向量化</button>
+            </div>
             <div id="memory-list"></div>
             <button class="btn" style="width:100%;margin-top:10px;background:rgba(255,255,255,0.5);color:#888;box-shadow:none" onclick="addEmptyMemory()">+ 手动添加一条记忆</button>
         </div>
@@ -467,7 +550,12 @@
 
     window.openSidebarById = async function(id) { const n=await Store.get('notes',id); if(n) openSidebar(n); };
     function switchDB() { const newName = document.getElementById('db-name-input').value.trim(); if(!newName || newName === DB_NAME) return; if(confirm(`切换到仓库 "${newName}" 吗？页面将刷新。`)) { localStorage.setItem('sr_dbname', newName); location.reload(); } }
-    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,2); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();refreshShelf();refreshTimeline();}; })}
+    // 📦 数据层：books(+chapterSummaries) / notes(+tags,type) / convos(全量对话) / memories(文本+向量)
+    function initDB(){return new Promise(r=>{ const q=indexedDB.open(DB_NAME,3); q.onupgradeneeded=e=>{db=e.target.result; if(!db.objectStoreNames.contains('books'))db.createObjectStore('books',{keyPath:'id'}); if(!db.objectStoreNames.contains('notes')){const n=db.createObjectStore('notes',{keyPath:'id'});n.createIndex('bookId','bookId',{unique:false})} if(!db.objectStoreNames.contains('convos')){const c=db.createObjectStore('convos',{keyPath:'id'});c.createIndex('bookId','bookId',{unique:false})} if(!db.objectStoreNames.contains('memories')){const m=db.createObjectStore('memories',{keyPath:'id'});m.createIndex('bookId','bookId',{unique:false})}}; q.onsuccess=e=>{db=e.target.result;r();migrateData();refreshShelf();refreshTimeline();}; })}
+    function uid(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+    function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    // 旧版 book.memories 数组 → 独立 memories 仓库（幂等迁移）
+    async function migrateData(){ try{ const bs=await Store.getAll('books'); for(const b of bs){ if(Array.isArray(b.memories)&&b.memories.length){ for(const m of b.memories){ await Store.put('memories',{id:uid('m'),bookId:b.id,text:m,vec:null,time:Date.now(),source:'迁移'}); } b.memories=[]; await Store.put('books',b); } } }catch(e){ console.warn('migrate fail',e); } }
     const Store={put:(t,d)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).put(d);x.oncomplete=r}),getAll:t=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).getAll().onsuccess=e=>r(e.target.result)}),get:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readonly');x.objectStore(t).get(id).onsuccess=e=>r(e.target.result)}),del:(t,id)=>new Promise(r=>{const x=db.transaction(t,'readwrite');x.objectStore(t).delete(id);x.oncomplete=r})};
 
     async function refreshShelf(){
@@ -490,13 +578,17 @@
         if(chapIdx === 0) tocHTML = '<div style="padding:40px 20px;text-align:center;color:#a4b0be;font-size:14px;line-height:1.6">🤖 智能提取未发现章节。<br><br>本书可能是短篇、未分章，或是排版特殊。</div>';
         document.getElementById('toc-list').innerHTML = tocHTML; document.getElementById('reader-content').innerHTML = tempContent; setTimeout(()=>document.getElementById('reader-content').scrollTop=b.scroll,100);
         const ns=await Store.getAll('notes'); restoreHighlights(ns.filter(n=>n.bookId===b.id));
-        
+
+        // 📍 章节定位（实时截取层）：记录各章位置，初始化"读到第几章"
+        currentConvo = null; hideChapChip();
+        setTimeout(()=>{ computeChapPositions(); if(currentBook && currentBook.maxChapSeen===undefined){ const ch=currentChapAt(document.getElementById('reader-content').scrollTop); currentBook.maxChapSeen=ch?ch.idx:0; Store.put('books',currentBook); } },300);
+
         // 📅 打开书籍即记录阅读活动
         recordReadingActivity();
         renderReadingStats();
     }
-    window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
-    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');document.getElementById('reading-progress-bar').classList.remove('active');document.getElementById('progress-info').classList.remove('active');refreshShelf();refreshTimeline();}
+    window.jumpToChap = function(id) { const el = document.getElementById(id); if(el) { const m = id.match(/toc-chap-(\d+)/); if(m && currentBook){ const idx = parseInt(m[1]); if(idx > (currentBook.maxChapSeen||0)){ currentBook.maxChapSeen = idx; Store.put('books', currentBook); } } document.getElementById('reader-content').scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); document.getElementById('toc-sidebar').classList.remove('active'); } }
+    function closeReader(){document.getElementById('reader-overlay').classList.remove('active');document.getElementById('reading-progress-bar').classList.remove('active');document.getElementById('progress-info').classList.remove('active');hideChapChip();closeChatOverlay();refreshShelf();refreshTimeline();}
 
     // 🔥 全新重写的【全书字符映射算法】高亮恢复系统：无视乱七八糟的段落、换行、已有高亮打断！绝不消失！
     function restoreHighlights(notes) {
@@ -615,14 +707,23 @@
     }
 
     document.addEventListener('selectionchange', () => { const s = window.getSelection(); const d = document.getElementById('floating-dock'); if(!s.isCollapsed && document.getElementById('reader-content').contains(s.anchorNode)) d.classList.add('visible'); else setTimeout(()=> { if(window.getSelection().isCollapsed) d.classList.remove('visible') }, 300); });
-    const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); createNoteWithSelection(range, text, mode); };['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); });
+    const handleCreate = (e, mode) => { e.preventDefault(); e.stopPropagation(); const s = window.getSelection(); if(s.isCollapsed) return showToast("⚠️ 请先选中一段文字"); const range = s.getRangeAt(0).cloneRange(); const text = s.toString(); if(!text.trim()) return showToast("⚠️ 选区内容为空"); if(mode==='copy'){ safeCopy(text); s.removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; } createNoteWithSelection(range, text, mode); };['mousedown','touchstart'].forEach(evt => { document.getElementById('btn-ai').addEventListener(evt, e => handleCreate(e, 'ai')); document.getElementById('btn-user').addEventListener(evt, e => handleCreate(e, 'user')); document.getElementById('btn-copy').addEventListener(evt, e => handleCreate(e, 'copy')); });
 
     async function createNoteWithSelection(range, text, mode) {
         const allNotes = await Store.getAll('notes'); if(allNotes.find(n => n.bookId === currentBook.id && n.quote === text) && !confirm("⚠️ 这段话已经标记过啦，还要重复标记吗？")) { window.getSelection().removeAllRanges(); document.getElementById('floating-dock').classList.remove('visible'); return; }
         document.getElementById('floating-dock').classList.remove('visible'); const nid = 'n'+Date.now();
-        
-        const note = { id:nid, bookId:currentBook.id, quote:text, time:Date.now(), messages:[], contextPre: "...", contextPost: "..." }; 
-        await Store.put('notes', note); 
+
+        // 📍 实时截取层：捕获选区前后文 + 当前章节位置
+        let ctxPre='', ctxPost='', chapTitle='';
+        try{
+            const root = document.getElementById('reader-content');
+            const r1 = document.createRange(); r1.setStart(root, 0); r1.setEnd(range.startContainer, range.startOffset); ctxPre = r1.toString().replace(/\s+/g,' ').trim().slice(-220);
+            const r2 = document.createRange(); r2.setStart(range.endContainer, range.endOffset); r2.setEnd(root, root.childNodes.length); ctxPost = r2.toString().replace(/\s+/g,' ').trim().slice(0,220);
+            const ch = currentChapAt(root.scrollTop); chapTitle = ch ? ch.title : '';
+        }catch(e){}
+
+        const note = { id:nid, bookId:currentBook.id, type:'highlight', tags:[], quote:text, time:Date.now(), messages:[], contextPre:ctxPre, contextPost:ctxPost, chapTitle };
+        await Store.put('notes', note);
         
         // 精准原位包裹，避免跳动，如果失败再调用智能补救
         try { safeHighlightRange(range, nid); } catch(e) { restoreHighlights([note]); }
@@ -631,7 +732,26 @@
         if(mode=='ai') triggerAI(note); else openSidebar(note);
     }
 
-    function openSidebar(n){activeNoteId=n.id;document.getElementById('sidebar').classList.add('active');document.getElementById('chat-quote').innerText=n.quote;renderChat(n.messages)}
+    function openSidebar(n){activeNoteId=n.id;document.getElementById('sidebar').classList.add('active');document.getElementById('chat-quote').innerText=n.quote;renderNoteTags(n);renderChat(n.messages)}
+
+    // 🏷️ 笔记标签
+    function renderNoteTags(n){
+        const c = document.getElementById('note-tags'); c.innerHTML = '';
+        (n.tags||[]).forEach((t, i) => {
+            const chip = document.createElement('span'); chip.className = 'tag-chip';
+            chip.innerHTML = `#${escHtml(t)} <span class="tag-x">×</span>`;
+            chip.querySelector('.tag-x').onclick = async () => { const note = await Store.get('notes', n.id); note.tags.splice(i, 1); await Store.put('notes', note); renderNoteTags(note); };
+            c.appendChild(chip);
+        });
+        const add = document.createElement('span'); add.className = 'tag-chip'; add.style.cursor = 'pointer'; add.style.background = 'rgba(0,0,0,0.05)'; add.style.color = '#888'; add.innerText = '＋标签';
+        add.onclick = async () => {
+            const t = prompt('添加标签（多个用逗号分隔）：'); if(!t) return;
+            const note = await Store.get('notes', n.id); note.tags = note.tags || [];
+            t.split(/[,，]/).map(s=>s.trim()).filter(Boolean).forEach(x => { if(!note.tags.includes(x)) note.tags.push(x); });
+            await Store.put('notes', note); renderNoteTags(note);
+        };
+        c.appendChild(add);
+    }
     function renderChat(ms){
         const l=document.getElementById('chat-list'); l.innerHTML=''; if(ms.length==0) l.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:40px;font-size:14px">✨ 对话空空如也，快跟AI聊聊吧</div>';
         ms.forEach((m, idx)=>{
@@ -642,19 +762,58 @@
 
     async function refreshTimeline(){
         const ns=await Store.getAll('notes'); const bs=await Store.getAll('books'); const c=document.getElementById('timeline-content'); c.innerHTML=''; const filterId = document.getElementById('timeline-filter').value;
+        const kw = (document.getElementById('timeline-search')?.value || '').trim().toLowerCase();
         if(ns.length==0){c.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:50px;font-size:15px">暂无任何笔记记录</div>';return}
-        const gs={}; ns.forEach(n=>{ if(filterId !== 'all' && n.bookId !== filterId) return; if(!gs[n.bookId]) gs[n.bookId]=[]; gs[n.bookId].push(n); });
-        if(Object.keys(gs).length === 0) { c.innerHTML='<div style="text-align:center;color:#a4b0be;margin-top:50px">该书下暂无笔记</div>'; return; }
+        // 🔍 跨书检索：引文 / 标签 / 对话内容
+        const match = n => { if(!kw) return true; const hay = [n.quote, (n.tags||[]).join(' '), ...(n.messages||[]).map(m=>m.content)].join(' ').toLowerCase(); return hay.includes(kw); };
+        const gs={}; ns.forEach(n=>{ if(filterId !== 'all' && n.bookId !== filterId) return; if(!match(n)) return; if(!gs[n.bookId]) gs[n.bookId]=[]; gs[n.bookId].push(n); });
+        if(Object.keys(gs).length === 0) { c.innerHTML=`<div style="text-align:center;color:#a4b0be;margin-top:50px">${kw?'没有匹配的笔记':'该书下暂无笔记'}</div>`; return; }
+        const badges = { highlight:'🖍️ 划词', free:'✍️ 随想', ai:'💬 对话' };
         Object.keys(gs).forEach(bid=>{
-            const b=bs.find(x=>x.id==bid); const g=document.createElement('div'); g.className='tl-book-group';
-            g.innerHTML=`<div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')"><span class="tl-title">📖 ${b?b.title:'未知'} <small style="color:#888;font-weight:normal;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:10px">${gs[bid].length} 条</small></span><span class="tl-arrow">▼</span></div><div class="tl-notes-container"></div>`;
+            const b=bs.find(x=>x.id==bid); const bookName = b ? b.title : (bid==='_free' ? '✍️ 随想（未关联书籍）' : '未知');
+            const g=document.createElement('div'); g.className='tl-book-group';
+            g.innerHTML=`<div class="tl-header" onclick="this.parentElement.classList.toggle('collapsed')"><span class="tl-title">📖 ${escHtml(bookName)} <small style="color:#888;font-weight:normal;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:10px">${gs[bid].length} 条</small></span><span class="tl-arrow">▼</span></div><div class="tl-notes-container"></div>`;
             const ct=g.querySelector('.tl-notes-container');
-            const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             gs[bid].sort((a,b)=>b.time-a.time).forEach(n=>{
-                const d=document.createElement('div'); d.className='tl-note-item'; d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px">"${esc(n.quote)}"</div><div style="font-size:13px;color:#888;line-height:1.5">${esc((n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50))}...</div>`;
-                initTimelineItem(d, n.id); d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),400); } }; ct.appendChild(d);
+                const tagsHtml = (n.tags&&n.tags.length) ? `<div style="margin:4px 0">${n.tags.map(t=>`<span class="tag-chip">#${escHtml(t)}</span>`).join('')}</div>` : '';
+                const d=document.createElement('div'); d.className='tl-note-item'; d.innerHTML=`<div style="color:#555;font-weight:bold;margin-bottom:6px"><span class="note-type-badge">${badges[n.type||'highlight']}</span>"${escHtml(n.quote)}"</div>${tagsHtml}<div style="font-size:13px;color:#888;line-height:1.5">${escHtml((n.messages[n.messages.length-1]?.content||'暂无对话').slice(0,50))}...</div>`;
+                initTimelineItem(d, n.id); d.onclick=async()=>{ if(isLongPress) return; const bk=await Store.get('books',n.bookId); if(bk){ switchTab('shelf'); openReader(bk); setTimeout(()=>openSidebar(n),400); } else { openSidebar(n); } }; ct.appendChild(d);
             }); c.appendChild(g);
         });
+    }
+
+    // ✍️ 自由笔记（随想）
+    async function addFreeNote(){
+        let bookId = '_free';
+        const filterId = document.getElementById('timeline-filter').value;
+        if(filterId !== 'all') bookId = filterId; else if(currentBook) bookId = currentBook.id;
+        const t = prompt(bookId === '_free' ? '写点随想（当前未选定书籍，将存为独立随想）：' : '给这本书写点笔记：');
+        if(!t || !t.trim()) return;
+        const txt = t.trim();
+        const note = { id:uid('n'), bookId, type:'free', tags:[], quote: txt.slice(0,120), time:Date.now(), messages: txt.length>120 ? [{role:'user', content:txt, time:Date.now()}] : [], contextPre:'', contextPost:'' };
+        await Store.put('notes', note); refreshTimeline(); showToast('✍️ 已记下');
+    }
+
+    // ⬇️ Markdown 导出（按当前筛选范围）
+    async function exportMarkdown(){
+        const ns=await Store.getAll('notes'); const bs=await Store.getAll('books'); const filterId=document.getElementById('timeline-filter').value;
+        const list = ns.filter(n => filterId==='all' || n.bookId===filterId);
+        if(!list.length) return showToast("⚠️ 没有可导出的笔记");
+        const gs={}; list.forEach(n=>{ (gs[n.bookId]=gs[n.bookId]||[]).push(n); });
+        const tname = { highlight:'划词标注', free:'自由笔记', ai:'对话收藏' };
+        let md = `# 读书笔记导出\n\n> 导出时间：${new Date().toLocaleString('zh-CN')}\n`;
+        Object.keys(gs).forEach(bid=>{
+            const b=bs.find(x=>x.id==bid);
+            md += `\n## 📖 ${b?cleanBookTitle(b.title):(bid==='_free'?'随想笔记':'未知书籍')}\n`;
+            gs[bid].sort((a,b)=>a.time-b.time).forEach(n=>{
+                md += `\n### ${n.quote.replace(/\n/g,' ')}\n\n- 类型：${tname[n.type||'highlight']} · ${new Date(n.time).toLocaleString('zh-CN')}${(n.tags&&n.tags.length)?` · 标签：${n.tags.map(t=>'#'+t).join(' ')}`:''}\n`;
+                if(n.chapTitle) md += `- 章节：${n.chapTitle}\n`;
+                if(n.messages && n.messages.length){ md += '\n'; n.messages.forEach(m=>{ md += `> **${m.role==='user'?'读者':'AI'}**：${m.content.replace(/\n/g,'\n> ')}\n>\n`; }); }
+            });
+        });
+        const blob = new Blob([md], {type:'text/markdown'}); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `读书笔记_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.md`; a.click(); URL.revokeObjectURL(url);
+        showToast(`✅ 已导出 ${list.length} 条笔记`);
     }
 
     let longPressTimer, isLongPress, targetNoteId;
@@ -671,11 +830,10 @@
         openSidebar(n); const l=document.getElementById('chat-list');
         const loadDiv = document.createElement('div'); loadDiv.className='msg-container ai'; loadDiv.innerHTML=`<div class="msg-bubble"><div style="height:14px;width:100px;background:rgba(0,0,0,0.05);border-radius:10px;animation:pulse 1.5s infinite"></div></div><style>@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}</style>`; l.appendChild(loadDiv); l.scrollTop=l.scrollHeight;
         
-        const memoryText = (currentBook.memories||[]).map((m,i)=>`${i+1}. ${m}`).join('\n'); 
-        
-        const systemPrompt = `${GS.persona}\n\n【最高指令：当前用户正在讨论的原文片段如下，你必须结合这段原文进行回复！】\n"${n.quote}"\n\n【当前全书背景与长期记忆】\n${currentBook.context}\n${memoryText}`;
-        
-        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ]; 
+        const book = (currentBook && currentBook.id === n.bookId) ? currentBook : await Store.get('books', n.bookId);
+        const systemPrompt = await ContextBuilder.build('highlight', { note: n, book: book || null, query: (n.quote + ' ' + (n.messages.at(-1)?.content || '')).slice(0, 600) });
+
+        const msgs =[ {role:'system', content: systemPrompt}, ...n.messages.map(m=>({role:m.role=='ai'?'assistant':'user', content:m.content})) ];
         if(n.messages.length===0) msgs.push({role:'user', content:`请针对这段原文发表你的看法。`});
         
         let fullText = "";
@@ -753,14 +911,26 @@
         }
     }
 
-    async function summarizeThread() {
-        const n = await Store.get('notes', activeNoteId); if(!n.messages.length) return showToast("⚠️ 无对话可提炼"); showToast("🧠 正在提炼核心记忆...");
-        try { const history = n.messages.map(m => `${m.role=='user'?'读者':'AI'}: ${m.content}`).join('\n'); const res = await fetch(`${GS.url}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GS.key}` }, body: JSON.stringify({ model: GS.model, messages:[ { role: 'system', content: '【最高指令】对前文内容进行全面梳理总结，字数400以内。无需聊天，直接输出干货结果。' }, { role: 'user', content: `对话内容：\n${history}\n\n请总结：` } ] }) }); const data = await res.json(); const summary = data.choices[0].message.content.trim(); if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push(summary); await Store.put('books', currentBook); n.messages.push({role:'ai', content:`📝 **已将提炼内容存入书籍记忆库**：\n${summary}`, time:Date.now()}); await Store.put('notes', n); renderChat(n.messages); showToast("✅ 记忆已永久保存"); } catch(e){ alert(e.message); }
+    // 非流式通用调用
+    async function callAPI(messages) {
+        const r = await fetch(`${GS.url}/chat/completions`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`}, body: JSON.stringify({ model: GS.model, messages }) });
+        if(!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+        const d = await r.json(); return d.choices[0].message.content.trim();
     }
 
-    async function autoAnalyze(){ 
-        if(!currentBook) return; showToast("🧠 正在调用大模型分析全书..."); const cleanTitle = currentBook.title.replace(/\.(txt|pdf|epub)$/i, '').replace(/[\[\(].*?[\]\)]/g, '').trim(); const t = document.getElementById('reader-content').innerText.slice(0,2500); 
-        try { const res = await fetch(`${GS.url}/chat/completions`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${GS.key}`}, body:JSON.stringify({ model:GS.model, messages:[ { role: 'system', content: '你是文学评论家。优先从知识库检索该书。如果不知道，根据开头推断。' }, { role:'user', content:`分析书籍《${cleanTitle}》。\n直接介绍核心剧情、人物关系和看点（300字）。\n如不知道，根据开头推断：\n${t}` } ] }) }).then(r=>r.json()); document.getElementById('current-book-context').value = res.choices[0].message.content; saveBookConfig(); showToast("✅ 自动分析完成！"); } catch(e){ alert("请求失败，请检查 API"); }
+    async function summarizeThread() {
+        const n = await Store.get('notes', activeNoteId); if(!n.messages.length) return showToast("⚠️ 无对话可提炼"); showToast("🧠 正在提炼核心记忆...");
+        try {
+            const history = n.messages.map(m => `${m.role=='user'?'读者':'AI'}: ${m.content}`).join('\n');
+            const summary = await callAPI([ { role: 'system', content: '【最高指令】对前文内容进行全面梳理总结，字数400以内。无需聊天，直接输出干货结果。' }, { role: 'user', content: `对话内容：\n${history}\n\n请总结：` } ]);
+            await saveMemory(n.bookId, summary, '笔记对话');
+            n.messages.push({role:'ai', content:`📝 **已将提炼内容存入书籍记忆库**：\n${summary}`, time:Date.now()}); await Store.put('notes', n); renderChat(n.messages); showToast("✅ 记忆已永久保存");
+        } catch(e){ alert(e.message); }
+    }
+
+    async function autoAnalyze(){
+        if(!currentBook) return; showToast("🧠 正在调用大模型分析全书..."); const cleanTitle = cleanBookTitle(currentBook.title); const t = document.getElementById('reader-content').innerText.slice(0,2500);
+        try { const res = await callAPI([ { role: 'system', content: '你是文学评论家。优先从知识库检索该书。如果不知道，根据开头推断。' }, { role:'user', content:`分析书籍《${cleanTitle}》。\n直接介绍核心剧情、人物关系和看点（300字）。\n如不知道，根据开头推断：\n${t}` } ]); document.getElementById('current-book-context').value = res; saveBookConfig(); showToast("✅ 自动分析完成！"); } catch(e){ alert("请求失败，请检查 API"); }
     }
 
     function formatText(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g,'<br>'); }
@@ -771,14 +941,67 @@
     async function editMsg(idx) { const n = await Store.get('notes', activeNoteId); const t = prompt("Edit:", n.messages[idx].content); if(t!==null){ n.messages[idx].content=t; await Store.put('notes', n); renderChat(n.messages); } }
     async function retryAI() { const n = await Store.get('notes', activeNoteId); if(n.messages.at(-1).role==='ai'){ n.messages.pop(); await Store.put('notes', n); renderChat(n.messages); triggerAI(n); } }
     
-    function openBookConfig(){if(!currentBook)return;document.getElementById('current-book-context').value=currentBook.context||'';renderMemories();document.getElementById('book-config-modal').style.display='flex';}
+    function openBookConfig(){
+        if(!currentBook)return;
+        document.getElementById('current-book-context').value=currentBook.context||'';
+        document.getElementById('meta-author').value=currentBook.author||'';
+        document.getElementById('meta-year').value=currentBook.year||'';
+        document.getElementById('meta-publisher').value=currentBook.publisher||'';
+        document.getElementById('meta-isbn').value=currentBook.isbn||'';
+        renderMemories();
+        document.getElementById('book-config-modal').style.display='flex';
+        // 📇 书名触发：首次打开且已配 Key 时，自动 AI 检索书目信息
+        if(!currentBook.metaTried && GS.key){ currentBook.metaTried=true; Store.put('books',currentBook); fetchBookMeta(true); }
+    }
     function saveBookConfig(){currentBook.context=document.getElementById('current-book-context').value;Store.put('books',currentBook);}
-    function renderMemories(){ const list = document.getElementById('memory-list'); list.innerHTML = ''; (currentBook.memories ||[]).forEach((m, i) => { const div = document.createElement('div'); div.innerHTML = `<div style="background:rgba(255,255,255,0.6);border-left:4px solid #f1c40f;padding:15px;margin-bottom:12px;border-radius:0 12px 12px 0;position:relative;box-shadow:0 2px 10px rgba(0,0,0,0.02)"><div contenteditable="true" onblur="updateMemory(${i}, this.innerText)" style="outline:none;line-height:1.5">${m.replace(/</g,'&lt;')}</div><div style="position:absolute;top:5px;right:5px;padding:5px 10px;color:#ff7675;cursor:pointer;font-size:18px" onclick="deleteMemory(${i})">×</div></div>`; list.appendChild(div.firstChild); }); }
-    async function updateMemory(idx, text){ currentBook.memories[idx] = text; await Store.put('books', currentBook); }
-    async function deleteMemory(idx){ if(confirm("删除这条记忆?")){ currentBook.memories.splice(idx, 1); await Store.put('books', currentBook); renderMemories(); } }
-    async function addEmptyMemory(){ if(!currentBook.memories) currentBook.memories=[]; currentBook.memories.push("点此输入新记忆..."); await Store.put('books', currentBook); renderMemories(); }
+    function saveBookMeta(){
+        if(!currentBook)return;
+        currentBook.author=document.getElementById('meta-author').value.trim();
+        currentBook.year=document.getElementById('meta-year').value.trim();
+        currentBook.publisher=document.getElementById('meta-publisher').value.trim();
+        currentBook.isbn=document.getElementById('meta-isbn').value.trim();
+        Store.put('books',currentBook);
+    }
+    async function fetchBookMeta(auto){
+        if(!currentBook)return; if(!GS.key) return showToast("⚠️ 请先在配置页填写 API Key");
+        const target = currentBook;
+        const t = cleanBookTitle(currentBook.title);
+        showToast(auto ? `🔍 AI 正在自动检索《${t}》书目信息...` : "🔍 正在检索书目信息...");
+        try{
+            const res = await callAPI([
+                { role:'system', content:'你是图书检索助手。如果你的服务支持联网搜索请联网检索，否则根据自身知识回答。只输出 JSON，不要输出任何其他内容。' },
+                { role:'user', content:`检索书籍《${t}》的出版信息，严格输出以下 JSON（未知字段填空字符串）：\n{"title":"","author":"","isbn":"","publisher":"","year":"","intro":"100字以内内容简介"}` }
+            ]);
+            if(currentBook !== target) return;
+            const m = res.match(/\{[\s\S]*\}/); if(!m) throw new Error('AI 未返回有效 JSON');
+            const j = JSON.parse(m[0]);
+            if(j.author) document.getElementById('meta-author').value = j.author;
+            if(j.year) document.getElementById('meta-year').value = String(j.year);
+            if(j.publisher) document.getElementById('meta-publisher').value = j.publisher;
+            if(j.isbn) document.getElementById('meta-isbn').value = String(j.isbn);
+            saveBookMeta();
+            if(j.intro && !(currentBook.context||'').trim()){ currentBook.context = j.intro; document.getElementById('current-book-context').value = j.intro; saveBookConfig(); }
+            showToast("✅ 书目信息已补全，可在表单中手动修正");
+        }catch(e){ if(!auto) alert("书目检索失败（可手动填写表单兜底）：\n" + e.message); }
+    }
+    async function renderMemories(){
+        const list = document.getElementById('memory-list'); list.innerHTML = ''; if(!currentBook) return;
+        const mems = (await Store.getAll('memories')).filter(m=>m.bookId===currentBook.id).sort((a,b)=>b.time-a.time);
+        if(!mems.length){ list.innerHTML = '<div style="text-align:center;color:#a4b0be;font-size:13px;padding:15px 0">还没有记忆卡片，和 AI 聊完点「🧠 入记忆」试试</div>'; return; }
+        mems.forEach(m => {
+            const card = document.createElement('div');
+            card.style.cssText = `background:rgba(255,255,255,0.6);border-left:4px solid ${m.vec?'#27ae60':'#f1c40f'};padding:15px;margin-bottom:12px;border-radius:0 12px 12px 0;position:relative;box-shadow:0 2px 10px rgba(0,0,0,0.02)`;
+            const body = document.createElement('div'); body.contentEditable = 'true'; body.style.cssText = 'outline:none;line-height:1.5'; body.innerText = m.text;
+            body.onblur = async () => { const t = body.innerText.trim(); if(t === m.text) return; m.text = t; m.vec = null; await Store.put('memories', m); };
+            const del = document.createElement('div'); del.style.cssText = 'position:absolute;top:5px;right:5px;padding:5px 10px;color:#ff7675;cursor:pointer;font-size:18px'; del.innerText = '×';
+            del.onclick = async () => { if(confirm('删除这条记忆?')){ await Store.del('memories', m.id); renderMemories(); } };
+            const meta = document.createElement('div'); meta.style.cssText = 'font-size:10px;color:#bbb;margin-top:8px'; meta.innerText = `${m.vec ? '⚡ 已向量化' : '○ 未向量化'} · ${m.source||'手动'} · ${new Date(m.time).toLocaleDateString()}`;
+            card.append(body, del, meta); list.appendChild(card);
+        });
+    }
+    async function addEmptyMemory(){ if(!currentBook)return; const t = prompt('输入新记忆内容：'); if(!t || !t.trim()) return; await saveMemory(currentBook.id, t.trim(), '手动'); renderMemories(); showToast('✅ 已添加记忆'); }
     
-    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);const wordCount=c.replace(/<[^>]+>/g,'').replace(/\s+/g,'').length;await Store.put('books',{id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],wordCount:wordCount,color:['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)','linear-gradient(135deg,#f6d365,#fda085)','linear-gradient(135deg,#fd7043,#ff8a65)'][Math.floor(Math.random()*8)]});refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
+    document.getElementById('file-in').addEventListener('change', async e=>{const f=e.target.files[0];if(!f)return;showToast("正在疯狂解析中...");try{let c='',t=f.name.split('.').pop().toLowerCase();if(t=='txt')c=formatTxt(await readFile(f));else if(t=='pdf')c=formatPdf(await parsePdf(f));else if(t=='epub')c=await parseEpub(f);const wordCount=c.replace(/<[^>]+>/g,'').replace(/\s+/g,'').length;const newBook={id:Date.now().toString(),title:f.name,type:t,content:c,scroll:0,context:'',memories:[],wordCount:wordCount,color:['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)','linear-gradient(135deg,#f6d365,#fda085)','linear-gradient(135deg,#fd7043,#ff8a65)'][Math.floor(Math.random()*8)]};await Store.put('books',newBook);currentBook=newBook;refreshShelf(); openBookConfig();}catch(x){alert(x.message)}});
     function readFile(f){return new Promise(r=>{const reader=new FileReader();reader.onload=e=>{const decoder=new TextDecoder(GS.encoding||'utf-8');r(decoder.decode(e.target.result));};reader.readAsArrayBuffer(f);})}
     function readArr(f){return new Promise(r=>{const d=new FileReader();d.onload=e=>r(e.target.result);d.readAsArrayBuffer(f)})}
     
@@ -789,7 +1012,7 @@
     function formatTxt(t){ return t.split(/\r?\n/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     function formatPdf(t){ return t.replace(/([^\n。？！.!?])\n([^\n])/g, '$1$2').split(/\n+/).filter(s=>s.trim()).map(s=>`<p>${s.trim()}</p>`).join(''); }
     
-    async function delBook(e,id){e.stopPropagation();if(!confirm('删除这本书及所有批注？'))return;await Store.del('books',id);const ns=await Store.getAll('notes');await Promise.all(ns.filter(n=>n.bookId===id).map(n=>Store.del('notes',n.id)));refreshShelf();refreshTimeline();}
+    async function delBook(e,id){e.stopPropagation();if(!confirm('删除这本书及所有批注、对话、记忆？'))return;await Store.del('books',id);const [ns,cs,ms]=await Promise.all([Store.getAll('notes'),Store.getAll('convos'),Store.getAll('memories')]);await Promise.all([...ns.filter(n=>n.bookId===id).map(n=>Store.del('notes',n.id)),...cs.filter(c=>c.bookId===id).map(c=>Store.del('convos',c.id)),...ms.filter(m=>m.bookId===id).map(m=>Store.del('memories',m.id))]);refreshShelf();refreshTimeline();}
     function switchTab(t){
         document.querySelectorAll('.tab-item').forEach(e=>e.classList.remove('active'));
         document.querySelectorAll('.view-page').forEach(e=>e.classList.remove('active'));
@@ -797,6 +1020,7 @@
         document.querySelectorAll('.tab-item')[map[t]].classList.add('active');
         document.getElementById(`view-${t}`).classList.add('active');
         if(t=='timeline') refreshTimeline();
+        if(t=='settings') renderStorageInfo();
     }
     // 🎨 主题切换功能
     const themes = {
@@ -872,13 +1096,14 @@
         document.getElementById('reading-progress-bar').classList.add('active');
         document.getElementById('progress-info').classList.add('active');
         
-        if(st)return; 
+        if(st)return;
         st=setTimeout(()=>{
-            st=null; 
+            st=null;
             if(currentBook){
                 currentBook.scroll=document.getElementById('reader-content').scrollTop;
                 Store.put('books',currentBook);
                 recordReadingActivity();
+                checkChapterCross();
             }
             setTimeout(() => {
                 document.getElementById('progress-info').classList.remove('active');
@@ -964,25 +1189,28 @@
         `;
     }
     
+    const BACKUP_SETTING_KEYS = ['sr_api_presets','sr_active_preset_idx','sr_personas','sr_active_persona_idx','sr_encoding','sr_reading_log','sr_theme','sr_dbname','sr_font_size','sr_emb_on','sr_emb_url','sr_emb_key','sr_emb_model'];
+
     async function exportAllData() {
         showToast("📦 正在打包数据...");
         try {
-            const books = await Store.getAll('books');
-            const notes = await Store.getAll('notes');
+            const [books, notes, convos, memories] = await Promise.all([Store.getAll('books'), Store.getAll('notes'), Store.getAll('convos'), Store.getAll('memories')]);
             const settings = {};
-            ['sr_api_presets','sr_active_preset_idx','sr_personas','sr_active_persona_idx','sr_encoding','sr_reading_log','sr_theme','sr_dbname','sr_font_size'].forEach(k => {
-                const v = localStorage.getItem(k);
-                if(v !== null) settings[k] = v;
-            });
-            const payload = { version: 1, exportTime: new Date().toISOString(), dbName: DB_NAME, books, notes, settings };
-            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            BACKUP_SETTING_KEYS.forEach(k => { const v = localStorage.getItem(k); if(v !== null) settings[k] = v; });
+            const payload = { version: 2, exportTime: new Date().toISOString(), dbName: DB_NAME, books, notes, convos, memories, settings };
+            const json = JSON.stringify(payload);
+            let blob, fname = `SoulReader备份_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}`;
+            if('CompressionStream' in window) {
+                blob = await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+                fname += '.json.gz';
+            } else {
+                blob = new Blob([json], { type: 'application/json' });
+                fname += '.json';
+            }
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `SoulReader备份_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.json`;
-            a.click();
+            const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
             URL.revokeObjectURL(url);
-            showToast(`✅ 已导出 ${books.length} 本书、${notes.length} 条批注`);
+            showToast(`✅ 已导出 ${books.length} 本书、${notes.length} 条批注、${convos.length} 个对话、${memories.length} 条记忆`);
         } catch(e) { alert("导出失败：" + e.message); }
     }
 
@@ -992,23 +1220,416 @@
         if(!confirm(`确定要从备份文件恢复吗？\n当前数据不会被清除，只会合并导入。`)) return;
         showToast("📂 正在读取备份文件...");
         try {
-            const text = await file.text();
+            const buf = new Uint8Array(await file.arrayBuffer());
+            let text;
+            if(buf[0] === 0x1f && buf[1] === 0x8b) {
+                if(!('DecompressionStream' in window)) throw new Error("当前浏览器不支持解压 .gz 备份，请更新浏览器");
+                text = await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+            } else {
+                text = new TextDecoder().decode(buf);
+            }
             const payload = JSON.parse(text);
             if(!payload.version || !payload.books) throw new Error("不是有效的备份文件");
             let bCount = 0, nCount = 0;
             for(const book of payload.books) { await Store.put('books', book); bCount++; }
-            for(const note of payload.notes) { await Store.put('notes', note); nCount++; }
+            for(const note of (payload.notes || [])) { await Store.put('notes', note); nCount++; }
+            for(const cv of (payload.convos || [])) await Store.put('convos', cv);
+            for(const m of (payload.memories || [])) await Store.put('memories', m);
             if(payload.settings) {
                 const skip = ['sr_dbname'];
                 Object.entries(payload.settings).forEach(([k,v]) => { if(!skip.includes(k)) localStorage.setItem(k,v); });
             }
+            await migrateData();
             showToast(`✅ 已恢复 ${bCount} 本书、${nCount} 条批注`);
             setTimeout(() => location.reload(), 1500);
         } catch(e) { alert("导入失败：" + e.message); }
     }
 
     window.addEventListener('beforeunload',()=>{if(currentBook){currentBook.scroll=document.getElementById('reader-content').scrollTop;Store.put('books',currentBook)}});
-    
+
+    /* ============================================================
+       🔮 灵犀架构 · 向量检索层（bge-m3 余弦召回）
+       ============================================================ */
+    const EMB = {
+        get on(){ return localStorage.getItem('sr_emb_on') === '1'; },
+        get url(){ return localStorage.getItem('sr_emb_url') || GS.url; },
+        get key(){ return localStorage.getItem('sr_emb_key') || GS.key; },
+        get model(){ return localStorage.getItem('sr_emb_model') || 'BAAI/bge-m3'; }
+    };
+    function saveEmbCfg(){
+        localStorage.setItem('sr_emb_on', document.getElementById('emb-on').checked ? '1' : '0');
+        localStorage.setItem('sr_emb_url', document.getElementById('emb-url').value.trim());
+        localStorage.setItem('sr_emb_key', document.getElementById('emb-key').value.trim());
+        localStorage.setItem('sr_emb_model', document.getElementById('emb-model').value.trim());
+    }
+    function renderEmbCfg(){
+        const on = document.getElementById('emb-on'); if(!on) return;
+        on.checked = localStorage.getItem('sr_emb_on') === '1';
+        document.getElementById('emb-url').value = localStorage.getItem('sr_emb_url') || '';
+        document.getElementById('emb-key').value = localStorage.getItem('sr_emb_key') || '';
+        document.getElementById('emb-model').value = localStorage.getItem('sr_emb_model') || '';
+    }
+    async function embedTexts(texts){
+        const r = await fetch(`${EMB.url}/embeddings`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${EMB.key}`}, body: JSON.stringify({ model: EMB.model, input: texts }) });
+        if(!r.ok) throw new Error('Embedding HTTP ' + r.status);
+        const d = await r.json();
+        return d.data.sort((a,b)=>a.index-b.index).map(x=>x.embedding);
+    }
+    function cosine(a, b){ let s=0, na=0, nb=0; const len=Math.min(a.length,b.length); for(let i=0;i<len;i++){ s+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return s/(Math.sqrt(na)*Math.sqrt(nb)||1); }
+    async function vectorRecall(bookId, query, k=4){
+        try{
+            const mems = (await Store.getAll('memories')).filter(m=>m.bookId===bookId&&m.vec);
+            const notes = (await Store.getAll('notes')).filter(n=>n.bookId===bookId&&n.vec);
+            const pool = [
+                ...mems.map(m=>({text:'[记忆] '+m.text, vec:m.vec})),
+                ...notes.map(n=>({text:'[笔记] '+n.quote+(n.messages?.length?' — '+n.messages.at(-1).content.slice(0,150):''), vec:n.vec}))
+            ];
+            if(!pool.length) return null;
+            const [qv] = await embedTexts([query.slice(0,1200)]);
+            return pool.map(p=>({text:p.text, score:cosine(qv,p.vec)})).filter(p=>p.score>0.3).sort((a,b)=>b.score-a.score).slice(0,k);
+        }catch(e){ console.warn('向量召回失败，退回普通模式', e); return null; }
+    }
+    async function saveMemory(bookId, text, source){
+        const rec = { id:uid('m'), bookId, text, vec:null, time:Date.now(), source: source||'手动' };
+        if(EMB.on){ try{ const [v] = await embedTexts([text.slice(0,1200)]); rec.vec = v; }catch(e){} }
+        await Store.put('memories', rec); return rec;
+    }
+    function noteEmbedText(n){ return [n.quote, (n.tags||[]).join(' '), (n.messages?.at(-1)?.content||'').slice(0,300)].filter(Boolean).join('\n'); }
+    async function vectorizeBook(){
+        if(!currentBook) return;
+        if(!EMB.on) return showToast("⚠️ 请先在「配置」页开启向量检索");
+        showToast("⚡ 正在为本书记忆与笔记生成向量...");
+        try{
+            const mems = (await Store.getAll('memories')).filter(m=>m.bookId===currentBook.id&&!m.vec);
+            const notes = (await Store.getAll('notes')).filter(n=>n.bookId===currentBook.id&&!n.vec);
+            const items = [...mems.map(m=>({rec:m, store:'memories', text:m.text})), ...notes.map(n=>({rec:n, store:'notes', text:noteEmbedText(n)}))];
+            if(!items.length) return showToast("✅ 全部内容向量已是最新");
+            for(let i=0; i<items.length; i+=10){
+                const batch = items.slice(i, i+10);
+                const vecs = await embedTexts(batch.map(x=>x.text.slice(0,1200)));
+                for(let j=0; j<batch.length; j++){ batch[j].rec.vec = vecs[j]; await Store.put(batch[j].store, batch[j].rec); }
+            }
+            showToast(`✅ 已向量化 ${items.length} 条内容`); renderMemories();
+        }catch(e){ alert("向量化失败：" + e.message); }
+    }
+
+    /* ============================================================
+       🧩 灵犀架构 · ContextBuilder：按场景拼装 system prompt
+       精确索引层(书目) + 全量注入层(背景) + 实时截取层(位置/前后文) + 向量检索层(召回)
+       ============================================================ */
+    function cleanBookTitle(t){ return (t||'').replace(/\.(txt|pdf|epub)$/i,'').replace(/[\[\(].*?[\]\)]/g,'').trim(); }
+    const ContextBuilder = {
+        bookMeta(b){
+            const bits = [`《${cleanBookTitle(b.title)}》`];
+            if(b.author) bits.push(`${b.author} 著`);
+            const pub = [b.publisher, b.year].filter(Boolean).join('，'); if(pub) bits.push(`（${pub}）`);
+            if(b.isbn) bits.push(`ISBN ${b.isbn}`);
+            return '【书目】' + bits.join(' ');
+        },
+        position(){
+            try{
+                if(!document.getElementById('reader-overlay').classList.contains('active')) return '';
+                const c = document.getElementById('reader-content');
+                const sh = c.scrollHeight - c.clientHeight;
+                const pct = sh > 0 ? Math.round(c.scrollTop / sh * 100) : 0;
+                const ch = currentChapAt(c.scrollTop);
+                return `【阅读位置】${ch ? `正在读「${ch.title}」，` : ''}全书进度约 ${pct}%`;
+            }catch(e){ return ''; }
+        },
+        accumulated(b, upto){
+            const cs = (b && b.chapterSummaries) || {};
+            const keys = Object.keys(cs).map(Number).filter(i=>!upto||i<=upto).sort((x,y)=>x-y);
+            if(!keys.length) return '';
+            let txt = keys.map(i=>`「${cs[i].title}」${cs[i].summary}`).join('\n');
+            if(txt.length > 2400) txt = '…' + txt.slice(-2400);
+            return '【已读章节累积摘要】\n' + txt;
+        },
+        async memoryBlock(bookId, query){
+            if(!bookId) return '';
+            if(query && EMB.on){
+                const rec = await vectorRecall(bookId, query);
+                if(rec && rec.length) return '【相关记忆与笔记（向量召回）】\n' + rec.map(r=>'· '+r.text.slice(0,400)).join('\n');
+            }
+            const mems = (await Store.getAll('memories')).filter(m=>m.bookId===bookId).sort((a,b)=>b.time-a.time).slice(0,8);
+            return mems.length ? '【长期记忆】\n' + mems.map((m,i)=>`${i+1}. ${m.text}`).join('\n') : '';
+        },
+        async build(scene, opts={}){
+            const b = opts.book !== undefined ? opts.book : currentBook;
+            const parts = [GS.persona];
+            if(b){ parts.push(this.bookMeta(b)); if(b.context) parts.push('【全书背景】\n' + b.context); }
+            const pos = this.position(); if(pos) parts.push(pos);
+            const mem = await this.memoryBlock(b ? b.id : null, opts.query); if(mem) parts.push(mem);
+            if(scene === 'highlight'){
+                const n = opts.note;
+                if(n.type === 'free') parts.push(`【用户的随想笔记，围绕它展开交流】\n"${n.quote}"`);
+                else parts.push(`【最高指令：当前用户正在讨论的原文片段如下，你必须结合这段原文进行回复！】\n"${n.quote}"`);
+                const pre = (n.contextPre && n.contextPre !== '...') ? n.contextPre : '';
+                const post = (n.contextPost && n.contextPost !== '...') ? n.contextPost : '';
+                if(pre || post) parts.push(`【片段前后文】\n…${pre}〔以上为片段前文〕〔以下为片段后文〕${post}…`);
+                if(n.chapTitle) parts.push(`【片段所在章节】${n.chapTitle}`);
+            } else if(scene === 'chapter'){
+                parts.push(`【用户刚读完的章节】「${opts.chapTitle}」`);
+                if(opts.chapSummary) parts.push(`【本章摘要与要点】\n${opts.chapSummary}`);
+                const acc = this.accumulated(b, opts.chapIdx); if(acc) parts.push(acc);
+                parts.push('【任务】用户刚读完这一章。请先简短分享一个你的观察或观点，然后主动抛出一个值得讨论的问题，邀请用户交流。');
+            } else if(scene === 'note'){
+                parts.push(`【讨论锚点：用户的一条笔记】\n"${opts.anchor.quote||''}"`);
+                if(opts.anchor.digest) parts.push(`【此前围绕该笔记的讨论回顾】\n${opts.anchor.digest}`);
+                parts.push('【任务】基于这条笔记和过往讨论，继续与用户深入交流。');
+            } else if(scene === 'free'){
+                const acc = this.accumulated(b); if(acc) parts.push(acc);
+                parts.push('【模式】漫谈模式：没有特定锚点，用户想随意聊聊这本书或由书延伸开的话题。');
+            }
+            return parts.filter(Boolean).join('\n\n');
+        }
+    };
+
+    /* ============================================================
+       📖 灵犀架构 · 章节追踪 & 章节结束触发（AI 主动抛问）
+       ============================================================ */
+    let chapPositions = [];
+    function computeChapPositions(){ chapPositions = []; document.querySelectorAll('#reader-content .chap-title').forEach((el,i)=>chapPositions.push({idx:i+1, title:el.innerText.trim(), el})); }
+    function currentChapAt(scrollTop){ let cur=null; for(const c of chapPositions){ if(c.el.offsetTop <= scrollTop + window.innerHeight*0.4) cur=c; else break; } return cur; }
+    function getChapterText(idx){
+        const c = chapPositions[idx-1]; if(!c) return '';
+        let t=''; let cur=c.el.nextElementSibling;
+        while(cur && !cur.classList.contains('chap-title')){ t += (cur.innerText||'') + '\n'; cur = cur.nextElementSibling; }
+        return t;
+    }
+    let chapChipIdx = null, chapChipTimer = null;
+    function checkChapterCross(){
+        try{
+            if(!currentBook || !chapPositions.length) return;
+            const ch = currentChapAt(document.getElementById('reader-content').scrollTop);
+            if(!ch) return;
+            const seen = currentBook.maxChapSeen || 0;
+            if(ch.idx > seen){
+                currentBook.maxChapSeen = ch.idx; Store.put('books', currentBook);
+                if(seen >= 1) showChapChip(seen);
+            }
+        }catch(e){}
+    }
+    function showChapChip(idx){
+        const c = chapPositions[idx-1]; if(!c) return;
+        chapChipIdx = idx;
+        document.getElementById('chap-chip-text').innerText = `📖 读完「${c.title.slice(0,12)}」`;
+        document.getElementById('chap-chip').classList.add('active');
+        clearTimeout(chapChipTimer); chapChipTimer = setTimeout(hideChapChip, 10000);
+    }
+    function hideChapChip(){ const el=document.getElementById('chap-chip'); if(el) el.classList.remove('active'); }
+    function chapChipChat(){ const idx = chapChipIdx; hideChapChip(); if(idx) openChapterConvo(idx); }
+    async function ensureChapterSummary(idx){
+        currentBook.chapterSummaries = currentBook.chapterSummaries || {};
+        if(currentBook.chapterSummaries[idx]) return currentBook.chapterSummaries[idx];
+        const c = chapPositions[idx-1]; if(!c) return null;
+        const text = getChapterText(idx).slice(0,3500);
+        const summary = await callAPI([
+            { role:'system', content:'你是阅读助手，擅长精炼总结。' },
+            { role:'user', content:`请总结以下章节，输出：不超过150字的摘要 + 2~3条关键要点（每条一行，以·开头）。\n章节「${c.title}」内容：\n${text}` }
+        ]);
+        currentBook.chapterSummaries[idx] = { title:c.title, summary };
+        await Store.put('books', currentBook);
+        return currentBook.chapterSummaries[idx];
+    }
+    async function openChapterConvo(idx){
+        if(!GS.key) return showToast("⚠️ 请先配置 API Key");
+        const c = chapPositions[idx-1]; if(!c) return;
+        showToast("🧠 正在整理本章要点...");
+        try{ await ensureChapterSummary(idx); }catch(e){ console.warn('章节摘要生成失败', e); }
+        const convo = { id:uid('c'), bookId:currentBook.id, title:`章节 · ${c.title.slice(0,14)}`, anchor:{type:'chapter', chapIdx:idx, chapTitle:c.title}, messages:[], archived:false, time:Date.now(), updated:Date.now() };
+        await Store.put('convos', convo);
+        openChatOverlay(convo);
+        convoAI(convo, '我刚读完这一章，请开始吧。');
+    }
+
+    /* ============================================================
+       💬 灵犀架构 · 悬浮聊天窗口（会话管理 / 漫谈 / 消息操作）
+       ============================================================ */
+    let currentConvo = null;
+    async function openChatOverlay(convo){
+        if(!currentBook) return showToast("⚠️ 请先打开一本书");
+        document.getElementById('chat-overlay').style.display = 'flex';
+        if(convo){ currentConvo = convo; showConvoChat(); }
+        else {
+            if(currentConvo && currentConvo.bookId === currentBook.id){ showConvoChat(); }
+            else {
+                const list = await bookConvos();
+                const firstActive = list.find(c=>!c.archived);
+                if(firstActive){ currentConvo = firstActive; showConvoChat(); }
+                else { currentConvo = null; toggleConvoList(true); }
+            }
+        }
+        renderConvoList();
+    }
+    function closeChatOverlay(){ const el=document.getElementById('chat-overlay'); if(el) el.style.display = 'none'; }
+    async function bookConvos(){ return (await Store.getAll('convos')).filter(c=>c.bookId===currentBook.id).sort((a,b)=>(b.updated||b.time)-(a.updated||a.time)); }
+    function toggleConvoList(force){
+        const lp = document.getElementById('convo-list-panel'); const cp = document.getElementById('convo-chat-panel');
+        const show = force === true || lp.style.display === 'none';
+        lp.style.display = show ? 'block' : 'none'; cp.style.display = show ? 'none' : 'flex';
+        if(show) renderConvoList();
+    }
+    async function renderConvoList(){
+        const lp = document.getElementById('convo-list-panel'); if(!currentBook) return;
+        const cs = await bookConvos(); lp.innerHTML = '';
+        if(!cs.length){ lp.innerHTML = '<div style="text-align:center;color:#a4b0be;margin-top:50px;font-size:14px">还没有对话<br>点右上角「➕ 漫谈」开始聊聊这本书吧</div>'; return; }
+        const mk = c => {
+            const d = document.createElement('div'); d.className = 'convo-item' + (currentConvo && currentConvo.id===c.id ? ' current' : '');
+            const icon = c.anchor?.type==='chapter' ? '📖' : c.anchor?.type==='note' ? '🖍️' : '☕';
+            d.innerHTML = `<div style="flex:1;overflow:hidden"><div style="font-size:14px;font-weight:bold;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${icon} ${escHtml(c.title||'对话')}</div><div style="font-size:11px;color:#a4b0be;margin-top:3px">${c.messages.length} 条 · ${new Date(c.updated||c.time).toLocaleDateString('zh-CN')}</div></div>`;
+            const ops = document.createElement('div'); ops.style.cssText = 'display:flex;gap:12px;font-size:14px;flex-shrink:0';
+            const arc = document.createElement('span'); arc.innerText = c.archived ? '📂' : '🗄️'; arc.title = c.archived?'取消归档':'归档'; arc.style.cursor='pointer';
+            arc.onclick = async ev => { ev.stopPropagation(); c.archived = !c.archived; await Store.put('convos', c); renderConvoList(); };
+            const del = document.createElement('span'); del.innerText = '🗑️'; del.style.cursor='pointer';
+            del.onclick = async ev => { ev.stopPropagation(); if(!confirm('删除这个对话？不可恢复。')) return; await Store.del('convos', c.id); if(currentConvo&&currentConvo.id===c.id) currentConvo=null; renderConvoList(); };
+            ops.append(arc, del); d.appendChild(ops);
+            d.onclick = () => { currentConvo = c; showConvoChat(); renderConvoList(); };
+            return d;
+        };
+        const act = cs.filter(c=>!c.archived), arc = cs.filter(c=>c.archived);
+        act.forEach(c=>lp.appendChild(mk(c)));
+        if(arc.length){ const h = document.createElement('div'); h.style.cssText='font-size:12px;color:#a4b0be;padding:15px 5px 5px'; h.innerText = `🗄️ 已归档 (${arc.length})`; lp.appendChild(h); arc.forEach(c=>lp.appendChild(mk(c))); }
+    }
+    function showConvoChat(){
+        document.getElementById('convo-list-panel').style.display = 'none';
+        document.getElementById('convo-chat-panel').style.display = 'flex';
+        const a = document.getElementById('convo-anchor');
+        if(currentConvo && currentConvo.anchor && currentConvo.anchor.type !== 'free'){
+            a.style.display = 'block';
+            a.innerText = currentConvo.anchor.type === 'chapter' ? `📖 锚点：章节「${currentConvo.anchor.chapTitle}」` : `🖍️ 锚点笔记："${(currentConvo.anchor.quote||'').slice(0,80)}"`;
+        } else a.style.display = 'none';
+        renderConvoMsgs();
+    }
+    function renderConvoMsgs(){
+        const l = document.getElementById('convo-msgs'); l.innerHTML = '';
+        if(!currentConvo){ l.innerHTML = '<div style="text-align:center;color:#a4b0be;margin-top:50px;font-size:14px">点「📚 会话列表」选择对话，或「➕ 漫谈」新开一个</div>'; return; }
+        const ms = currentConvo.messages;
+        if(!ms.length) l.innerHTML = '<div style="text-align:center;color:#a4b0be;margin-top:40px;font-size:14px">☕ 漫谈时间，想聊点什么？</div>';
+        ms.forEach((m, idx) => {
+            const isAI = m.role === 'ai';
+            const d = document.createElement('div'); d.className = `msg-container ${m.role}`;
+            const bub = document.createElement('div'); bub.className = 'msg-bubble'; bub.innerHTML = formatText(m.content); d.appendChild(bub);
+            const acts = document.createElement('div'); acts.className = 'msg-actions';
+            const mkAct = (txt, fn, danger) => { const s = document.createElement('span'); s.className = 'action-link' + (danger?' danger':''); s.innerText = txt; s.onclick = fn; acts.appendChild(s); };
+            if(isAI) mkAct('⭐ 存为笔记', ()=>convoMsgToNote(idx));
+            if(isAI && idx === ms.length-1) mkAct('🔄 重写', retryConvoAI);
+            mkAct('📄 复制', ()=>safeCopy(m.content));
+            mkAct('🗑️ 删除', async ()=>{ if(!confirm('删除这条消息？')) return; currentConvo.messages.splice(idx,1); await saveConvo(); renderConvoMsgs(); }, true);
+            d.appendChild(acts); l.appendChild(d);
+        });
+        l.scrollTop = l.scrollHeight;
+    }
+    async function saveConvo(){ if(!currentConvo) return; currentConvo.updated = Date.now(); await Store.put('convos', currentConvo); }
+    async function newFreeConvo(){
+        if(!currentBook) return showToast("⚠️ 请先打开一本书");
+        const now = new Date();
+        const convo = { id:uid('c'), bookId:currentBook.id, title:`漫谈 · ${now.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})} ${now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`, anchor:{type:'free'}, messages:[], archived:false, time:Date.now(), updated:Date.now() };
+        await Store.put('convos', convo);
+        currentConvo = convo;
+        document.getElementById('chat-overlay').style.display = 'flex';
+        showConvoChat(); renderConvoList();
+    }
+    async function sendConvoMsg(){
+        if(!currentConvo) return showToast("⚠️ 请先选择或新建一个对话");
+        const i = document.getElementById('convo-input'); const t = i.value.trim(); if(!t) return; i.value = '';
+        currentConvo.messages.push({role:'user', content:t, time:Date.now()});
+        await saveConvo(); renderConvoMsgs(); convoAI(currentConvo);
+    }
+    async function retryConvoAI(){ if(!currentConvo) return; if(currentConvo.messages.at(-1)?.role === 'ai'){ currentConvo.messages.pop(); await saveConvo(); renderConvoMsgs(); convoAI(currentConvo); } }
+    async function convoAI(convo, shim){
+        if(!GS.key) return showToast("⚠️ 请先在设置中配置 API Key");
+        const l = document.getElementById('convo-msgs');
+        const loadDiv = document.createElement('div'); loadDiv.className = 'msg-container ai';
+        loadDiv.innerHTML = `<div class="msg-bubble"><div style="height:14px;width:100px;background:rgba(0,0,0,0.05);border-radius:10px;animation:pulse 1.5s infinite"></div></div>`;
+        l.appendChild(loadDiv); l.scrollTop = l.scrollHeight;
+        try{
+            const scene = convo.anchor?.type === 'chapter' ? 'chapter' : convo.anchor?.type === 'note' ? 'note' : 'free';
+            const lastUser = [...convo.messages].reverse().find(m=>m.role==='user');
+            const book = (currentBook && currentBook.id === convo.bookId) ? currentBook : await Store.get('books', convo.bookId);
+            const opts = { book: book || null, query: (lastUser?.content || convo.anchor?.quote || '').slice(0,600) };
+            if(scene === 'chapter'){ opts.chapIdx = convo.anchor.chapIdx; opts.chapTitle = convo.anchor.chapTitle; opts.chapSummary = ((book&&book.chapterSummaries)||{})[convo.anchor.chapIdx]?.summary || ''; }
+            if(scene === 'note') opts.anchor = convo.anchor;
+            const sys = await ContextBuilder.build(scene, opts);
+            const msgs = [{role:'system', content:sys}, ...convo.messages.map(m=>({role:m.role==='ai'?'assistant':'user', content:m.content}))];
+            if(shim) msgs.push({role:'user', content:shim});
+            let fullText = '';
+            await callAPIStream(msgs, chunk => { fullText += chunk; loadDiv.innerHTML = `<div class="msg-bubble">${formatText(fullText)}</div>`; l.scrollTop = l.scrollHeight; });
+            convo.messages.push({role:'ai', content:fullText, time:Date.now()});
+            convo.updated = Date.now(); await Store.put('convos', convo);
+            if(currentConvo && currentConvo.id === convo.id){ currentConvo = convo; renderConvoMsgs(); }
+        }catch(e){
+            loadDiv.innerHTML = `<div class="msg-bubble" style="color:#e74c3c;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">❌ <b>API 调用失败</b>\n\n${e.message}</div>`;
+        }
+    }
+    // ⭐ 对话 → 笔记：一键折叠插入（带上一条提问，双链 convoId）
+    async function convoMsgToNote(idx){
+        if(!currentConvo) return; const m = currentConvo.messages[idx]; if(!m) return;
+        let prevUser = null;
+        for(let i=idx-1; i>=0; i--){ if(currentConvo.messages[i].role === 'user'){ prevUser = currentConvo.messages[i]; break; } }
+        const note = { id:uid('n'), bookId:currentConvo.bookId, type:'ai', tags:['对话收藏'], quote:(prevUser ? prevUser.content : currentConvo.title).slice(0,100), time:Date.now(), messages:[...(prevUser?[{...prevUser}]:[]), {...m}], convoId:currentConvo.id, contextPre:'', contextPost:'' };
+        await Store.put('notes', note);
+        showToast("⭐ 已折叠存入笔记，可在归档页查看");
+    }
+    // 💬 笔记 → 对话：继续讨论（原对话摘要重投入）
+    async function continueDiscussion(){
+        const n = await Store.get('notes', activeNoteId); if(!n) return;
+        if(!GS.key) return showToast("⚠️ 请先配置 API Key");
+        const bk = await Store.get('books', n.bookId);
+        if(!bk) return showToast("⚠️ 随想笔记未关联书籍，暂不支持继续讨论");
+        if(!currentBook || currentBook.id !== n.bookId) return showToast("⚠️ 请先打开这本书再继续讨论");
+        showToast("💬 正在准备讨论上下文...");
+        let digest = ''; const ms = n.messages || [];
+        if(ms.length){
+            if(ms.length <= 8){ digest = ms.map(m=>`${m.role==='user'?'读者':'AI'}：${m.content.slice(0,300)}`).join('\n'); }
+            else {
+                try{
+                    const history = ms.map(m=>`${m.role==='user'?'读者':'AI'}: ${m.content}`).join('\n');
+                    digest = await callAPI([{role:'system', content:'请将以下围绕一条读书笔记的讨论压缩成200字以内的要点回顾，直接输出结果。'}, {role:'user', content:history}]);
+                }catch(e){ digest = ms.slice(-8).map(m=>`${m.role==='user'?'读者':'AI'}：${m.content.slice(0,200)}`).join('\n'); }
+            }
+        }
+        const convo = { id:uid('c'), bookId:n.bookId, title:`笔记 · ${n.quote.slice(0,14)}`, anchor:{type:'note', noteId:n.id, quote:n.quote, digest}, messages:[], archived:false, time:Date.now(), updated:Date.now() };
+        await Store.put('convos', convo);
+        document.getElementById('sidebar').classList.remove('active');
+        openChatOverlay(convo);
+        convoAI(convo, '我想围绕这条笔记继续深入讨论。请先简要回顾我们之前聊到的要点，然后提出一个新的讨论角度。');
+    }
+
+    /* ============================================================
+       💽 灵犀架构 · 持久化：storage.persist + 存储用量面板 + 清理
+       ============================================================ */
+    async function renderStorageInfo(){
+        const el = document.getElementById('storage-info'); if(!el || !db) return;
+        try{
+            const [books, notes, convos, mems] = await Promise.all([Store.getAll('books'), Store.getAll('notes'), Store.getAll('convos'), Store.getAll('memories')]);
+            let usageHtml = '';
+            if(navigator.storage && navigator.storage.estimate){
+                const est = await navigator.storage.estimate();
+                const used = est.usage || 0, quota = est.quota || 1;
+                const pct = Math.min(100, used / quota * 100);
+                const fmt = n => n > 1e9 ? (n/1e9).toFixed(2)+' GB' : n > 1e6 ? (n/1e6).toFixed(1)+' MB' : Math.round(n/1e3)+' KB';
+                const persisted = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+                usageHtml = `<div>已用 <b>${fmt(used)}</b> / 配额 ${fmt(quota)}${persisted ? ' <span style="color:#27ae60">· 🔒 已开启持久化保护</span>' : ' <span style="color:#e67e22">· ⚠️ 未获持久化授权（浏览器可能清理数据，请常备份）</span>'}</div><div class="storage-bar"><div style="width:${pct.toFixed(1)}%"></div></div>`;
+            }
+            el.innerHTML = usageHtml + `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:#888"><span>📚 ${books.length} 本书</span><span>🖍️ ${notes.length} 条笔记</span><span>💬 ${convos.length} 个对话</span><span>🧠 ${mems.length} 条记忆</span></div>`;
+        }catch(e){ el.innerText = '无法获取存储信息'; }
+    }
+    async function cleanArchivedConvos(){
+        const cs = (await Store.getAll('convos')).filter(c=>c.archived);
+        if(!cs.length) return showToast("没有已归档的对话");
+        if(!confirm(`删除 ${cs.length} 个已归档对话？不可恢复。`)) return;
+        for(const c of cs) await Store.del('convos', c.id);
+        renderStorageInfo(); showToast(`🧹 已清理 ${cs.length} 个对话`);
+    }
+    async function clearChapterCache(){
+        const bs = await Store.getAll('books'); let n = 0;
+        for(const b of bs){ if(b.chapterSummaries && Object.keys(b.chapterSummaries).length){ n += Object.keys(b.chapterSummaries).length; b.chapterSummaries = {}; await Store.put('books', b); } }
+        renderStorageInfo(); showToast(n ? `🧹 已清空 ${n} 条章节摘要缓存` : '没有缓存可清理');
+    }
+
+    if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+    renderEmbCfg();
+
     initDB();
     setTimeout(renderReadingStats, 500);
 </script>
